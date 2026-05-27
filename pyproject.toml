@@ -39,8 +39,8 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [project.urls]
-Homepage = "https://github.com/justinwatts/gopro-yank"
-Issues = "https://github.com/justinwatts/gopro-yank/issues"
+Homepage = "https://github.com/azohra/gopro-yank"
+Issues = "https://github.com/azohra/gopro-yank/issues"
 
 [project.scripts]
 gopro-yank = "gopro_yank.cli:main"
