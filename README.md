@@ -38,7 +38,7 @@ pipx install gopro-yank
 Or from source:
 
 ```bash
-git clone https://github.com/justinwatts/gopro-yank
+git clone https://github.com/azohra/gopro-yank
 cd gopro-yank
 pip install .
 ```
