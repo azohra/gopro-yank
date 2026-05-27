@@ -23,12 +23,12 @@ Enter
 Show
 
 # 1. The pitch: a single, short command.
-Type "gopro-yank demo --count 14 --parallel 6 --target-mbps 220"
+Type "gopro-yank demo --count 14 --parallel 6"
 Sleep 800ms
 Enter
 
 # Let the run play out — 14 fake items at 6-way parallelism.
-Sleep 14s
+Sleep 18s
 
 # Hold on the finished screen so the result is readable.
 Sleep 2s

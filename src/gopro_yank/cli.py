@@ -748,14 +748,7 @@ async def _run_manifest(
 @main.command()
 @click.option("--count", default=24, show_default=True, type=int, help="Number of fake items.")
 @click.option("--parallel", default=4, show_default=True, type=int)
-@click.option(
-    "--target-mbps",
-    default=80.0,
-    show_default=True,
-    type=float,
-    help="Simulated per-worker throughput. Lower = slower demo.",
-)
-def demo(count: int, parallel: int, target_mbps: float) -> None:
+def demo(count: int, parallel: int) -> None:
     """Preview the UI against simulated data — no credentials required.
 
     \b
@@ -766,14 +759,7 @@ def demo(count: int, parallel: int, target_mbps: float) -> None:
     """
     console = Console()
     try:
-        asyncio.run(
-            run_demo(
-                count=count,
-                parallel=parallel,
-                target_mbps=target_mbps,
-                console=console,
-            )
-        )
+        asyncio.run(run_demo(count=count, parallel=parallel, console=console))
     except KeyboardInterrupt:
         console.print("\n[yellow]demo interrupted.[/]")
         sys.exit(130)
