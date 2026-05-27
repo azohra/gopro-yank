@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from rich.console import Console, Group
 from rich.live import Live
@@ -26,10 +25,6 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 from rich.table import Table
-from rich.text import Text
-
-if TYPE_CHECKING:
-    from gopro_yank.adaptive import AdaptiveLimiter
 
 
 @dataclass(slots=True)
@@ -78,13 +73,13 @@ class RichProgress:
         self,
         console: Console | None = None,
         *,
-        limiter: AdaptiveLimiter | None = None,
+        parallel: int = 0,
         total_items: int = 0,
         total_bytes: int = 0,
         already_done: int = 0,
     ) -> None:
         self.console = console or Console()
-        self.limiter = limiter
+        self.parallel = parallel
         self.total_items = total_items
         self.total_bytes = total_bytes
         self.already_done = already_done
@@ -92,6 +87,7 @@ class RichProgress:
         self._file_tasks: dict[str, TaskID] = {}
         self._file_names: dict[str, str] = {}
         self._file_bytes: dict[str, int] = {}
+        self._inflight = 0
 
         self.progress = Progress(
             SpinnerColumn(style="cyan"),
@@ -119,13 +115,11 @@ class RichProgress:
         t.add_column(style="bold cyan", no_wrap=True)
         t.add_column()
         done = self.already_done + self.stats.ok + self.stats.skip
-        attempted = self.stats.ok + self.stats.fail + self.stats.auth
         eta_secs = (
             (self.total_bytes - self.stats.bytes_done) / max(1, self.stats.bytes_done) * self.stats.elapsed()
             if self.stats.bytes_done > 0
             else 0
         )
-        lim = self.limiter.stats() if self.limiter else None
         rows = [
             ("library", f"{self.total_items} items   {_fmt_bytes(self.total_bytes)}"),
             (
@@ -133,7 +127,6 @@ class RichProgress:
                 f"[green]ok {self.stats.ok}[/]  "
                 f"[yellow]skip {self.stats.skip}[/]  "
                 f"[red]fail {self.stats.fail}[/]  "
-                f"[red]auth {self.stats.auth}[/]  "
                 f"[dim]done {done}/{self.total_items}[/]",
             ),
             (
@@ -143,15 +136,9 @@ class RichProgress:
                 f"eta {_fmt_eta(eta_secs)}",
             ),
         ]
-        if lim:
-            arrow = "→" if lim.streak == 0 else "↑"
+        if self.parallel:
             rows.append(
-                (
-                    "concurrency",
-                    f"target {lim.target}   inflight {lim.inflight}   "
-                    f"{arrow} streak {lim.streak}   "
-                    f"[dim]{lim.successes}✓ / {lim.failures}✗[/]",
-                )
+                ("workers", f"{self._inflight}/{self.parallel} active")
             )
         for k, v in rows:
             t.add_row(k, v)
@@ -192,6 +179,7 @@ class RichProgress:
         self._file_tasks[media_id] = tid
         self._file_names[media_id] = filename
         self._file_bytes[media_id] = 0
+        self._inflight += 1
         self._refresh()
 
     def file_chunk(self, media_id: str, chunk_size: int) -> None:
@@ -208,6 +196,7 @@ class RichProgress:
         name = self._file_names.pop(media_id, media_id)
         if tid is not None:
             self.progress.remove_task(tid)
+        self._inflight = max(0, self._inflight - 1)
         if status == "ok":
             self.stats.ok += 1
         elif status == "skip":

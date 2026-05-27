@@ -18,7 +18,6 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from gopro_yank import __version__
-from gopro_yank.adaptive import AdaptiveLimiter
 from gopro_yank.api import AuthError, GoProClient, MediaItem
 from gopro_yank.demo import run_demo
 from gopro_yank.download import DownloadResult, download_one, yyyy_mm
@@ -199,32 +198,11 @@ def _show_status_banner() -> None:
     help="Where extracted files land (organized into YYYY/MM/ subfolders). Prompted if omitted.",
 )
 @click.option(
-    "--initial",
-    default=4,
-    show_default=True,
-    type=int,
-    help="Starting concurrency.",
-)
-@click.option(
-    "--ceiling",
-    default=16,
-    show_default=True,
-    type=int,
-    help="Max concurrent downloads (adaptive ramp-up cap).",
-)
-@click.option(
-    "--floor",
-    default=1,
-    show_default=True,
-    type=int,
-    help="Min concurrent downloads (adaptive shrink floor).",
-)
-@click.option(
-    "--grow-after",
+    "--parallel",
     default=8,
     show_default=True,
     type=int,
-    help="Successful downloads in a row before bumping concurrency by 1.",
+    help="How many files to download at once. Bump if your pipe is faster than GoPro's throttle.",
 )
 @click.option(
     "--per-page",
@@ -237,10 +215,7 @@ def pull(
     env_file: Path,
     state_dir: Path,
     out: Path | None,
-    initial: int,
-    ceiling: int,
-    floor: int,
-    grow_after: int,
+    parallel: int,
     per_page: int,
 ) -> None:
     """Download everything in the library (resumable)."""
@@ -262,10 +237,7 @@ def pull(
             user_id=user_id,
             state=state,
             out=out,
-            initial=initial,
-            ceiling=ceiling,
-            floor=floor,
-            grow_after=grow_after,
+            parallel=parallel,
             per_page=per_page,
             console=console,
         )
@@ -278,15 +250,12 @@ async def _run_pull(
     user_id: str,
     state: MarkerStore,
     out: Path,
-    initial: int,
-    ceiling: int,
-    floor: int,
-    grow_after: int,
+    parallel: int,
     per_page: int,
     console: Console,
 ) -> None:
     async with GoProClient(
-        token, user_id, max_connections=ceiling + 4
+        token, user_id, max_connections=parallel + 4
     ) as client:
         try:
             await client.validate()
@@ -308,18 +277,13 @@ async def _run_pull(
             console.print("[green]nothing to do.[/]")
             return
 
-        limiter = AdaptiveLimiter(
-            initial=initial,
-            floor=floor,
-            ceiling=ceiling,
-            grow_after=grow_after,
-        )
+        sem = asyncio.Semaphore(parallel)
         auth_event = asyncio.Event()
         results: list[DownloadResult] = []
 
         with RichProgress(
             console=console,
-            limiter=limiter,
+            parallel=parallel,
             total_items=len(items),
             total_bytes=total_bytes,
             already_done=already_done,
@@ -328,11 +292,8 @@ async def _run_pull(
             async def worker(item: MediaItem) -> None:
                 if auth_event.is_set():
                     return
-                async with limiter.slot() as slot:
+                async with sem:
                     res = await download_one(client, item, out, state, sink=ui)
-                    # ok + skip both count as healthy (skip is "already done").
-                    # fail/auth count against the limiter so it can shrink.
-                    slot.success = res.status in ("ok", "skip")
                     if res.status == "auth":
                         auth_event.set()
                     results.append(res)
@@ -359,6 +320,10 @@ async def _run_pull(
             console.print("re-run the same command to retry just the failures.")
             sys.exit(1)
         console.print(f"[green]✓ downloaded {ok} new file(s).[/]")
+        console.print(
+            f"\n[dim]tip:[/] [cyan]gopro-yank verify --out {out}[/]  "
+            "[dim]— confirm every file landed on disk before you cancel.[/]"
+        )
 
 
 # ============================================================================
@@ -716,6 +681,11 @@ def verify(
             console.print(f"  [dim]{mid}[/]: {msg}")
         sys.exit(1)
     console.print("[green]✓ everything matches[/]")
+    console.print(
+        "\n[dim]tip:[/] your backup is complete and verified. "
+        "safe to cancel at\n"
+        "  [cyan]https://gopro.com/en/us/account/subscription[/]"
+    )
 
 
 # ============================================================================
@@ -777,16 +747,7 @@ async def _run_manifest(
 
 @main.command()
 @click.option("--count", default=24, show_default=True, type=int, help="Number of fake items.")
-@click.option("--initial", default=2, show_default=True, type=int)
-@click.option("--ceiling", default=8, show_default=True, type=int)
-@click.option("--floor", default=1, show_default=True, type=int)
-@click.option(
-    "--grow-after",
-    default=4,
-    show_default=True,
-    type=int,
-    help="Smaller than the real default so ramp-up is visible in seconds.",
-)
+@click.option("--parallel", default=4, show_default=True, type=int)
 @click.option(
     "--target-mbps",
     default=80.0,
@@ -794,14 +755,7 @@ async def _run_manifest(
     type=float,
     help="Simulated per-worker throughput. Lower = slower demo.",
 )
-def demo(
-    count: int,
-    initial: int,
-    ceiling: int,
-    floor: int,
-    grow_after: int,
-    target_mbps: float,
-) -> None:
+def demo(count: int, parallel: int, target_mbps: float) -> None:
     """Preview the UI against simulated data — no credentials required.
 
     \b
@@ -815,10 +769,7 @@ def demo(
         asyncio.run(
             run_demo(
                 count=count,
-                initial=initial,
-                ceiling=ceiling,
-                floor=floor,
-                grow_after=grow_after,
+                parallel=parallel,
                 target_mbps=target_mbps,
                 console=console,
             )

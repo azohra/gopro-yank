@@ -33,7 +33,7 @@ wastes the whole transfer.
 | | |
 |---|---|
 | **One file per request** | Drops only cost that file, not 25 GB of buffered zip |
-| **Adaptive concurrency** | Starts at 4, ramps up on success streaks, shrinks on failure — auto-tunes to GoPro's per-account throttle |
+| **Parallel by default** | 8 concurrent downloads out of the box; tune with `--parallel N` |
 | **Resumable** | Per-file markers; Ctrl-C anytime and re-run picks up where it left off |
 | **Year/month sorted** | Files land in `out/YYYY/MM/` based on each item's `created_at` |
 | **HTTP/2 + async** | Built on `httpx` and `asyncio`; ~100 MB/s sustained on real runs |
@@ -101,35 +101,13 @@ That's it. `pull` is resumable, idempotent, and writes directly into a
 | `gopro-yank login` | Capture `gp_access_token` + `gp_user_id` cookies via clipboard; validate against the API; save with mode 600 |
 | `gopro-yank demo` | Run the TUI against fake data — no credentials required |
 | `gopro-yank list` | Library summary panel + head/tail sample. `--all`, `--pending`, `--done`, `--json` |
-| `gopro-yank pull` | Download everything. Resumable. `--initial / --ceiling / --floor / --grow-after` tune the adaptive limiter |
+| `gopro-yank pull` | Download everything. Resumable. `--parallel N` tunes concurrency (default 8) |
 | `gopro-yank status` | What's done vs pending; what's on disk |
 | `gopro-yank verify` | For each marker, confirm the on-disk files exist and (for multi-chapter clips) sum to the API's reported size |
 | `gopro-yank manifest` | JSON snapshot: every library item + marker state |
 | `gopro-yank skip` | Write a "skipped" marker for one or more media IDs (e.g. `MultiClipEdit` items that aren't real media) |
 
 Every command takes `-h/--help` for full options.
-
-## How the adaptive limiter works
-
-```
-                              ┌────────────────────────┐
-                              │  AdaptiveLimiter       │
-   acquire ─────────────►     │  inflight: 5/8 target  │
-                              │                        │
-                              │  on success:           │
-   release(success=True) ───► │    streak += 1         │
-                              │    if streak >= 8:     │
-                              │      target += 1       │  ← ramp up
-                              │                        │
-                              │  on failure:           │
-   release(success=False) ──► │    target -= 1         │  ← back off
-                              │    streak = 0          │
-                              └────────────────────────┘
-                                    floor ≤ target ≤ ceiling
-```
-
-The header panel in the TUI shows live target, inflight, and success streak —
-watch ramp-up happen in real time. Tune `--ceiling` to your pipe.
 
 ## State and storage
 
