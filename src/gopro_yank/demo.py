@@ -60,11 +60,16 @@ def _generate_items(count: int, *, seed: int = 7) -> list[FakeItem]:
     return items
 
 
+# Simulated per-worker throughput. Picked so the demo finishes quickly enough
+# that someone watching doesn't lose patience, while still showing meaningful
+# per-file progress (~12s total for default 24 items at parallel=4).
+_DEMO_MBPS = 120.0
+
+
 async def _fake_download(
     item: FakeItem,
     *,
     sink: RichProgress,
-    target_mbps: float,
     rng: random.Random,
 ) -> str:
     sink.file_start(item.id, item.filename, item.file_size)
@@ -73,7 +78,7 @@ async def _fake_download(
     fail_after = rng.randint(2, 6) if will_fail else None
 
     chunk_size = 4 * 1024 * 1024
-    sleep_per_chunk = chunk_size / max(target_mbps * 1024 * 1024, 1)
+    sleep_per_chunk = chunk_size / max(_DEMO_MBPS * 1024 * 1024, 1)
 
     sent = 0
     chunks = 0
@@ -91,20 +96,13 @@ async def _fake_download(
     return "ok"
 
 
-async def run_demo(
-    *,
-    count: int,
-    parallel: int,
-    target_mbps: float,
-    console: Console,
-) -> None:
+async def run_demo(*, count: int, parallel: int, console: Console) -> None:
     items = _generate_items(count)
     total_bytes = sum(it.file_size for it in items)
 
     console.print(
-        f"[bold]demo:[/] simulating {count} fake items "
-        f"(~{total_bytes / 1024**3:.1f} GB) at ~{target_mbps:.0f} MB/s per worker, "
-        f"{parallel} workers, occasional simulated drops."
+        f"[bold]demo:[/] {count} simulated items "
+        f"(~{total_bytes / 1024**3:.1f} GB), {parallel} workers."
     )
 
     sem = asyncio.Semaphore(parallel)
@@ -120,9 +118,7 @@ async def run_demo(
 
         async def worker(item: FakeItem) -> str:
             async with sem:
-                return await _fake_download(
-                    item, sink=ui, target_mbps=target_mbps, rng=rng
-                )
+                return await _fake_download(item, sink=ui, rng=rng)
 
         await asyncio.gather(*[worker(it) for it in items])
 
