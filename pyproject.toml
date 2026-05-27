@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gopro-yank"
+version = "0.1.0"
+description = "Bulk-download your entire GoPro Plus cloud library before cancelling. Async, resumable, adaptive parallelism."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Justin Watts" }]
+keywords = ["gopro", "backup", "download", "cloud", "media"]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Video",
+    "Topic :: System :: Archiving :: Backup",
+]
+dependencies = [
+    "httpx[http2]>=0.27.0",
+    "rich>=13.7.0",
+    "click>=8.1.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.23", "ruff>=0.1.0"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[project.urls]
+Homepage = "https://github.com/justinwatts/gopro-yank"
+Issues = "https://github.com/justinwatts/gopro-yank/issues"
+
+[project.scripts]
+gopro-yank = "gopro_yank.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gopro_yank"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]  # line length handled by formatter
