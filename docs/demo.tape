@@ -1,0 +1,34 @@
+# vhs script for the gopro-yank demo GIF.
+#
+# render with:  vhs docs/demo.tape
+# output:       docs/demo.gif
+
+Output docs/demo.gif
+
+Set Shell zsh
+Set FontSize 14
+Set FontFamily "JetBrains Mono"
+Set Width  1280
+Set Height 760
+Set Padding 24
+Set Theme   "Dracula"
+Set TypingSpeed 30ms
+
+Hide
+Type "PATH=/Users/justin/.local/bin:$PATH"
+Enter
+Sleep 300ms
+Type "clear"
+Enter
+Show
+
+# 1. The pitch: a single, short command.
+Type "gopro-yank demo --count 14 --target-mbps 220 --grow-after 3"
+Sleep 800ms
+Enter
+
+# Let the run play out. The adaptive limiter ramps 2 → 6 over ~6 seconds.
+Sleep 14s
+
+# Hold on the finished screen so the result is readable.
+Sleep 2s
