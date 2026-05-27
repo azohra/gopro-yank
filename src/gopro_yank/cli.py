@@ -1,15 +1,17 @@
-"""Click CLI: pull, list, status, verify, manifest."""
+"""Click CLI: pull, list, status, verify, manifest, login, skip."""
 
 from __future__ import annotations
 
 import asyncio
 import json
 import sys
+import webbrowser
 from collections.abc import Iterable
 from pathlib import Path
 
 import click
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 
 from gopro_yank import __version__
@@ -19,6 +21,13 @@ from gopro_yank.download import DownloadResult, download_one, yyyy_mm
 from gopro_yank.env import get_credentials
 from gopro_yank.progress import RichProgress
 from gopro_yank.state import Marker, MarkerStore
+
+MEDIA_LIBRARY_URL = "https://gopro.com/media-library/"
+
+LOGIN_HINT = (
+    "[yellow]→ run [bold cyan]gopro-yank login[/] to set up "
+    "or refresh your cookies.[/]"
+)
 
 DEFAULT_ENV = Path.home() / ".config" / "gopro-yank" / ".env"
 DEFAULT_STATE = Path.home() / ".local" / "share" / "gopro-yank" / "state"
@@ -50,13 +59,16 @@ def _credentials_or_die(env_file: Path, console: Console) -> tuple[str, str]:
         return get_credentials(env_file)
     except RuntimeError as e:
         console.print(f"[red]✗[/] {e}")
-        console.print(
-            f"\nGet your cookies from gopro.com, then create [cyan]{env_file}[/]:\n"
-            "  AUTH_TOKEN=eyJhbGc...\n"
-            "  USER_ID=00000000-...\n"
-            "\nSee `gopro-yank --help` and the README for the cookie-extraction walkthrough."
-        )
+        console.print(LOGIN_HINT)
         sys.exit(2)
+
+
+def _die_auth(console: Console, message: str) -> None:
+    """Print a clear auth-failure message and exit. Used when the API rejects
+    us mid-run with a 401 — usually expired cookies."""
+    console.print(f"[red]✗ auth failed:[/] {message}")
+    console.print(LOGIN_HINT)
+    sys.exit(2)
 
 
 @click.group(
@@ -70,14 +82,52 @@ def main(ctx: click.Context) -> None:
 
     \b
     Quickstart:
-      1. Create ~/.config/gopro-yank/.env with AUTH_TOKEN + USER_ID
-         (extract from gopro.com cookies — see README)
-      2. gopro-yank pull --out ~/GoPro
+      1. gopro-yank login              # interactive cookie setup
+      2. gopro-yank pull --out ~/GoPro # download everything
 
-    If no subcommand is given, runs `pull` with defaults.
+    Run with no subcommand to see your current state and the next
+    suggested command.
     """
     if ctx.invoked_subcommand is None:
-        ctx.invoke(pull)
+        _show_status_banner()
+
+
+def _show_status_banner() -> None:
+    """Bare `gopro-yank` invocation: a friendly status overview that points
+    the user at the right next command for where they are in the flow."""
+    from rich.console import Group
+
+    console = Console()
+    has_env = DEFAULT_ENV.exists()
+    state = MarkerStore(DEFAULT_STATE)
+    marker_count = len(state.all_ids()) if state.dir.exists() else 0
+
+    facts = Table.grid(padding=(0, 2))
+    facts.add_column(style="bold cyan", no_wrap=True)
+    facts.add_column()
+    facts.add_row(
+        "credentials",
+        f"[green]✓[/] {DEFAULT_ENV}" if has_env else "[red]✗[/] not configured",
+    )
+    facts.add_row("state markers", f"{marker_count} item(s) recorded as done")
+
+    if not has_env:
+        next_cmd = "[bold cyan]gopro-yank login[/]  — paste cookies, validate, save"
+    elif marker_count == 0:
+        next_cmd = "[bold cyan]gopro-yank pull --out <directory>[/]  — first backup run"
+    else:
+        next_cmd = (
+            "[bold cyan]gopro-yank pull --out <directory>[/]  — resume / catch up\n"
+            "[dim]or[/] [cyan]gopro-yank status --out <directory>[/]  — see what's pending"
+        )
+
+    console.print(
+        Panel(
+            Group(facts, "", f"[bold]next:[/]\n{next_cmd}"),
+            title="[bold]gopro-yank[/]",
+            border_style="cyan",
+        )
+    )
 
 
 # ============================================================================
@@ -179,8 +229,7 @@ async def _run_pull(
         try:
             await client.validate()
         except AuthError as e:
-            console.print(f"[red]✗ auth failed:[/] {e}")
-            sys.exit(2)
+            _die_auth(console, str(e))
 
         with console.status("[cyan]listing media library...[/]"):
             items = await client.list_all(per_page=per_page)
@@ -240,8 +289,7 @@ async def _run_pull(
         auth_failed = any(r.status == "auth" for r in results)
         console.print()
         if auth_failed:
-            console.print("[red]✗ auth token expired mid-run.[/] refresh cookies and re-run.")
-            sys.exit(2)
+            _die_auth(console, "token expired mid-run (some files completed).")
         if fail:
             console.print(f"[red]{len(fail)} file(s) failed:[/]")
             for r in fail[:20]:
@@ -277,8 +325,7 @@ async def _run_list(
         try:
             await client.validate()
         except AuthError as e:
-            console.print(f"[red]✗ {e}[/]")
-            sys.exit(2)
+            _die_auth(console, str(e))
 
         if as_json:
             async for it in client.iter_media(per_page=per_page):
@@ -325,8 +372,7 @@ async def _run_status(
         try:
             await client.validate()
         except AuthError as e:
-            console.print(f"[red]✗ {e}[/]")
-            sys.exit(2)
+            _die_auth(console, str(e))
         items = await client.list_all()
     library_ids = {it.id for it in items}
     marker_ids = state.all_ids()
@@ -450,8 +496,7 @@ async def _run_manifest(
         try:
             await client.validate()
         except AuthError as e:
-            console.print(f"[red]✗ {e}[/]")
-            sys.exit(2)
+            _die_auth(console, str(e))
         items = await client.list_all()
     out_list: list[dict] = []
     for it in items:
@@ -472,6 +517,118 @@ async def _run_manifest(
         console.print(f"wrote manifest: {out_file}")
     else:
         click.echo(payload)
+
+
+# ============================================================================
+# login — interactive cookie capture + validation
+# ============================================================================
+
+
+_LOGIN_INTRO = """\
+[bold]gopro-yank login[/] — walk through getting your two API cookies.
+
+In the browser:
+  1. Make sure you're [bold]signed in[/] at [cyan]gopro.com[/]
+  2. Open DevTools — [bold]Cmd+Opt+I[/] (Mac) or [bold]Ctrl+Shift+I[/] (other)
+  3. Go to [bold]Application[/] tab → [bold]Storage[/] → [bold]Cookies[/] → [cyan]https://gopro.com[/]
+  4. Find these two rows and copy the [bold]Value[/] column:
+       • [cyan]gp_access_token[/]  (long JWT, starts with [dim]eyJhbGc...[/])
+       • [cyan]gp_user_id[/]       (UUID like [dim]00000000-0000-0000-0000-000000000000[/])
+
+I'll prompt for each value below. Paste, press Enter.
+"""
+
+
+@main.command()
+@click.option(
+    "--env-file",
+    "env_file",
+    default=str(DEFAULT_ENV),
+    type=click.Path(path_type=Path),
+    show_default=True,
+    help="Where to save AUTH_TOKEN and USER_ID.",
+)
+@click.option(
+    "--no-browser",
+    is_flag=True,
+    help="Don't try to open gopro.com in your browser.",
+)
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Overwrite an existing env file without confirming.",
+)
+def login(env_file: Path, no_browser: bool, force: bool) -> None:
+    """Interactive cookie capture: paste, validate, save.
+
+    Opens gopro.com in your browser, walks you through DevTools, prompts for
+    the two cookie values, validates them against the GoPro API, and saves to
+    a .env file with mode 600.
+    """
+    console = Console()
+
+    if env_file.exists() and not force:
+        if not click.confirm(
+            f"{env_file} already exists. Overwrite?",
+            default=False,
+        ):
+            console.print("[yellow]aborted — existing file kept.[/]")
+            sys.exit(1)
+
+    console.print(Panel(_LOGIN_INTRO, border_style="cyan", title="step 1 — get the cookies"))
+
+    if not no_browser:
+        if click.confirm(
+            f"Open {MEDIA_LIBRARY_URL} in your browser now?",
+            default=True,
+        ):
+            try:
+                webbrowser.open(MEDIA_LIBRARY_URL)
+            except Exception:  # noqa: BLE001
+                console.print(f"[yellow]couldn't open browser; visit {MEDIA_LIBRARY_URL} manually.[/]")
+
+    console.print()
+    token = click.prompt("[bold cyan]gp_access_token[/]", prompt_suffix=" › ").strip()
+    user_id = click.prompt("[bold cyan]gp_user_id[/]", prompt_suffix=" › ").strip()
+
+    if not token.startswith("eyJ"):
+        console.print(
+            "[yellow]⚠[/]  that doesn't look like a JWT (expected to start with [dim]eyJ[/]). "
+            "Continuing anyway — we'll find out for sure when we validate."
+        )
+
+    console.print()
+    me: dict | None = None
+    with console.status("[cyan]validating with the GoPro API...[/]"):
+        try:
+            me = asyncio.run(_validate_creds(token, user_id))
+        except AuthError as e:
+            console.print(f"[red]✗ rejected by GoPro:[/] {e}")
+            console.print("[dim]Double-check you copied the entire Value column — JWTs are long.[/]")
+            sys.exit(1)
+        except Exception as e:  # noqa: BLE001
+            console.print(f"[red]✗ network error during validation:[/] {e!r}")
+            sys.exit(1)
+
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text(f"AUTH_TOKEN={token}\nUSER_ID={user_id}\n")
+    try:
+        env_file.chmod(0o600)
+    except OSError:
+        pass  # Windows or unusual filesystems — don't crash, but warn
+
+    who = me.get("email") or me.get("id") or user_id if me else user_id
+    console.print(f"[green]✓ logged in[/] as [bold]{who}[/]")
+    console.print(f"  saved to [dim]{env_file}[/]")
+    console.print()
+    console.print("[bold]Next:[/]")
+    console.print("  [cyan]gopro-yank list[/]                   show your library")
+    console.print("  [cyan]gopro-yank pull --out <directory>[/] download everything")
+
+
+async def _validate_creds(token: str, user_id: str) -> dict:
+    async with GoProClient(token, user_id) as client:
+        return await client.validate()
 
 
 # ============================================================================
