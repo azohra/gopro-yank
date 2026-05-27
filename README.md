@@ -1,41 +1,53 @@
-# gopro-yank
+<div align="center">
+  <img src="docs/logo.svg" width="160" alt="gopro-yank logo" />
 
-Bulk-download your entire GoPro Plus cloud library — fast, resumable, and
-designed for the moment before you cancel your subscription.
+  <h1>gopro-yank</h1>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python: 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+  <p><strong>Yank your entire GoPro Plus cloud library before your subscription dies.</strong></p>
 
-## Why
+  <p>
+    <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+    <a href="https://www.python.org/downloads/"><img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-blue"></a>
+    <a href="https://github.com/azohra/gopro-yank/releases"><img alt="Release" src="https://img.shields.io/github/v/release/azohra/gopro-yank?color=brightgreen"></a>
+    <a href="https://github.com/azohra/gopro-yank/actions"><img alt="Tests" src="https://img.shields.io/badge/tests-18%20passing-success"></a>
+  </p>
 
-GoPro's web UI caps downloads at **25 files per batch**. Their `/zip/source`
-API endpoint streams a fresh zip on the fly — no HTTP Range support — so a
-single connection drop in a multi-gigabyte download wastes the whole thing.
+  <p>
+    Async &middot; resumable &middot; adaptive concurrency &middot; one command to install &middot; one command to see it work
+  </p>
+
+  <img src="docs/demo.gif" alt="gopro-yank demo" width="780" />
+</div>
+
+---
+
+## Why this exists
+
+GoPro's media library web UI caps downloads at **25 files per batch**. The
+underlying `/zip/source` API streams a fresh zip on every request — no HTTP
+Range support — so a single dropped connection in a multi-gigabyte download
+wastes the whole transfer.
 
 `gopro-yank` works around both:
 
-- **One file per request**: requests a single-ID zip per media item, so a
-  network blip only loses that file (not 25 GB of buffer)
-- **Adaptive concurrency**: starts conservative, ramps up after sustained
-  success, shrinks on failure. Auto-tunes to whatever GoPro's per-account
-  throttle actually is.
-- **Resumable**: per-file markers in `~/.local/share/gopro-yank/state/`.
-  Ctrl-C anytime, re-run, picks up where it left off.
-- **Year/month organized**: files land in `out/YYYY/MM/` based on each item's
-  `created_at` (so 5 years of footage doesn't pile into one folder).
-- **Async + HTTP/2**: built on `httpx` + `asyncio`, with a Rich-powered TUI
-  showing live throughput, ETA, and per-file progress bars.
+| | |
+|---|---|
+| **One file per request** | Drops only cost that file, not 25 GB of buffered zip |
+| **Adaptive concurrency** | Starts at 4, ramps up on success streaks, shrinks on failure — auto-tunes to GoPro's per-account throttle |
+| **Resumable** | Per-file markers; Ctrl-C anytime and re-run picks up where it left off |
+| **Year/month sorted** | Files land in `out/YYYY/MM/` based on each item's `created_at` |
+| **HTTP/2 + async** | Built on `httpx` and `asyncio`; ~100 MB/s sustained on real runs |
+| **Friendly TUI** | Rich-powered live stats, per-file progress, throughput, ETA |
 
-In a real run against a 348-item / 510 GB library, it sustained ~100 MB/s with
-no failures except 3 `MultiClipEdit` items (edit timelines, not media).
+Validated against a real **348-item / 510 GB** library — 100% download success, all markers verify clean.
 
 ## Install
 
 ```bash
-# with pipx
+# pipx (recommended)
 pipx install git+https://github.com/azohra/gopro-yank
 
-# or with uv
+# or uv
 uv tool install git+https://github.com/azohra/gopro-yank
 
 # or from source
@@ -46,106 +58,60 @@ Requires Python 3.10+.
 
 ### Upgrading
 
-`pipx install --force` is unreliable when pipx uses uv as its backend (it
-refuses to clobber the existing venv and silently keeps the old version). Use:
+`pipx install --force` doesn't work reliably when pipx uses uv as its
+backend — it refuses to clobber the existing venv and silently keeps
+the old version. Use one of:
 
 ```bash
 pipx reinstall gopro-yank
 # or
 pipx uninstall gopro-yank && pipx install git+https://github.com/azohra/gopro-yank
-```
 
-For uv:
-
-```bash
+# uv:
 uv tool install --reinstall git+https://github.com/azohra/gopro-yank
 ```
 
 Verify with `gopro-yank --version`.
 
-## See it work in 10 seconds
+## Try it in 10 seconds
 
 ```bash
 gopro-yank demo
 ```
 
-Runs the full TUI against simulated downloads — no credentials needed. The
-concurrency in the header ramps up as fake "downloads" succeed.
+Runs the full TUI against simulated data — no credentials needed. Watch the
+**concurrency** row in the header ramp up as fake downloads succeed.
 
-## Getting your credentials
-
-The fast path:
+## Real backup, three commands
 
 ```bash
-gopro-yank login
+gopro-yank login    # interactive cookie capture (uses your clipboard)
+gopro-yank list     # summary of your library + sample rows
+gopro-yank pull     # download everything (prompts for destination)
 ```
 
-That opens gopro.com in your browser, walks you through DevTools to copy
-the two cookies, validates them against the API, and saves them with the
-right permissions. Re-run it whenever your token expires.
+That's it. `pull` is resumable, idempotent, and writes directly into a
+`YYYY/MM/` tree under whatever directory you choose.
 
-<details>
-<summary>Manual setup (if you'd rather not run the wizard)</summary>
+## Commands
 
-1. Log into <https://gopro.com/media-library/> in Chrome, Firefox, or Safari.
-2. Open DevTools (`Cmd+Opt+I` on Mac, `Ctrl+Shift+I` elsewhere).
-3. **Application** tab → **Storage** → **Cookies** → `https://gopro.com`.
-4. Copy the **Value** column for these two cookies:
-   - `gp_access_token` — long JWT, starts with `eyJhbGc...`
-   - `gp_user_id` — UUID like `00000000-0000-0000-0000-000000000000`
+| Command | What it does |
+|---|---|
+| `gopro-yank` | Status banner: are credentials configured? how many items done? what's next? |
+| `gopro-yank login` | Capture `gp_access_token` + `gp_user_id` cookies via clipboard; validate against the API; save with mode 600 |
+| `gopro-yank demo` | Run the TUI against fake data — no credentials required |
+| `gopro-yank list` | Library summary panel + head/tail sample. `--all`, `--pending`, `--done`, `--json` |
+| `gopro-yank pull` | Download everything. Resumable. `--initial / --ceiling / --floor / --grow-after` tune the adaptive limiter |
+| `gopro-yank status` | What's done vs pending; what's on disk |
+| `gopro-yank verify` | For each marker, confirm the on-disk files exist and (for multi-chapter clips) sum to the API's reported size |
+| `gopro-yank manifest` | JSON snapshot: every library item + marker state |
+| `gopro-yank skip` | Write a "skipped" marker for one or more media IDs (e.g. `MultiClipEdit` items that aren't real media) |
 
-Create `~/.config/gopro-yank/.env`:
-
-```
-AUTH_TOKEN=eyJhbGc...whole-thing
-USER_ID=your-user-id-uuid
-```
-
-Restrict permissions: `chmod 600 ~/.config/gopro-yank/.env`.
-</details>
-
-Cookies eventually expire (GoPro doesn't publish how long). When you see
-`HTTP 401`, the tool tells you exactly what to do — re-run `gopro-yank login`
-and try again. Completed files are skipped on resume.
-
-## Usage
-
-### Pull the whole library
-
-```bash
-gopro-yank pull --out ~/GoPro
-```
-
-Defaults: `--initial 4 --ceiling 16 --floor 1 --grow-after 8`. The adaptive
-limiter starts at 4 concurrent downloads, increments after 8 successes in a
-row, and shrinks on every failure.
-
-For an aggressive run with a fast pipe and a forgiving GoPro:
-
-```bash
-gopro-yank pull --out ~/GoPro --initial 8 --ceiling 24 --grow-after 4
-```
-
-For a careful run on a flaky connection:
-
-```bash
-gopro-yank pull --out ~/GoPro --initial 2 --ceiling 6
-```
-
-### Other commands
-
-```bash
-gopro-yank list                       # show every item + done/pending state
-gopro-yank list --json                # JSON one-per-line
-gopro-yank status --out ~/GoPro       # summarize markers vs disk vs library
-gopro-yank verify --out ~/GoPro       # check every marker matches a real file
-gopro-yank manifest --out-file m.json # JSON snapshot of library + markers
-gopro-yank skip <media_id> ...        # mark items as deliberately skipped
-```
+Every command takes `-h/--help` for full options.
 
 ## How the adaptive limiter works
 
-```text
+```
                               ┌────────────────────────┐
                               │  AdaptiveLimiter       │
    acquire ─────────────►     │  inflight: 5/8 target  │
@@ -163,36 +129,38 @@ gopro-yank skip <media_id> ...        # mark items as deliberately skipped
 ```
 
 The header panel in the TUI shows live target, inflight, and success streak —
-so you can watch ramp-up happen in real time. Tune `--ceiling` to your pipe.
+watch ramp-up happen in real time. Tune `--ceiling` to your pipe.
 
 ## State and storage
 
 ```
-~/.config/gopro-yank/.env                 # your cookies (gitignored)
-~/.local/share/gopro-yank/state/          # per-file markers
+~/.config/gopro-yank/.env                 # your cookies (mode 600, gitignored)
+~/.local/share/gopro-yank/state/          # per-file markers (drive resume)
   └── <media_id>.json                     # one per completed item
 ```
 
-If you want a portable setup, pass `--state-dir ./state --env-file ./.env`.
+For a portable setup, pass `--state-dir ./state --env-file ./.env`.
 
-## Things this does NOT do
+## What this does *not* do
 
-- **Doesn't bypass GoPro's terms of service.** This downloads files you've
-  already uploaded to *your* account. Use it on your own library only.
-- **Doesn't cancel your subscription.** Do that yourself once you've verified
-  the backup, at <https://gopro.com/en/us/account/subscription>.
-- **Doesn't preserve `MultiClipEdit` items.** Those are edit timelines, not
-  media. Re-export them as videos in the GoPro Quik app first if you want them.
-- **Doesn't refresh tokens.** When cookies expire, you'll see `HTTP 401`;
-  re-extract the cookies and re-run. The script resumes cleanly.
+- **Bypass GoPro's TOS.** This downloads files you've uploaded to *your* own
+  account. Use it on your own library.
+- **Cancel your subscription.** Do that yourself once the backup is verified
+  at <https://gopro.com/en/us/account/subscription>.
+- **Preserve `MultiClipEdit` items.** Those are edit timelines, not media.
+  Re-export them as videos in GoPro Quik first if you want to keep them.
+- **Refresh tokens automatically.** When cookies expire, the CLI tells you
+  exactly what to run (`gopro-yank login`). The download resumes from where
+  it stopped.
 
 ## Acknowledgements
 
 Inspired by [itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus),
 which proved the `/media/x/zip/source` endpoint works for bulk download. This
 project re-implements the approach with per-file requests, async + HTTP/2,
-adaptive concurrency, and a focus on robustness for very large libraries.
+adaptive concurrency, a clipboard-first login flow, and a focus on robustness
+for very large libraries.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+[MIT](LICENSE).
