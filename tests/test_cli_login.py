@@ -27,7 +27,8 @@ def test_login_writes_env_on_success(tmp_path: Path) -> None:
         result = runner.invoke(
             main,
             ["login", "--env-file", str(env_file), "--no-browser", "--paste"],
-            input="eyJ_TEST_JWT\nUSER_VALUE\n",
+            # paste value, confirm "looks right?", paste user_id, confirm
+            input="eyJ_TEST_JWT\ny\nUSER_VALUE\ny\n",
         )
     assert result.exit_code == 0, result.output
     body = env_file.read_text()
@@ -61,7 +62,7 @@ def test_login_force_overwrites(tmp_path: Path) -> None:
         result = runner.invoke(
             main,
             ["login", "--env-file", str(env_file), "--no-browser", "--paste", "--force"],
-            input="eyJ_NEW_JWT\nNEW_USER\n",
+            input="eyJ_NEW_JWT\ny\nNEW_USER\ny\n",
         )
     assert result.exit_code == 0, result.output
     assert "eyJ_NEW_JWT" in env_file.read_text()
@@ -79,7 +80,7 @@ def test_login_exits_on_auth_error(tmp_path: Path) -> None:
         result = runner.invoke(
             main,
             ["login", "--env-file", str(env_file), "--no-browser", "--paste"],
-            input="eyJ_BAD\nBAD\n",
+            input="eyJ_BAD\ny\nBAD\ny\n",
         )
     assert result.exit_code != 0
     assert "rejected by GoPro" in result.output
