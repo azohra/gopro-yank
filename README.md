@@ -47,7 +47,18 @@ Requires Python 3.10+.
 
 ## Getting your credentials
 
-`gopro-yank` reads two cookies from gopro.com:
+The fast path:
+
+```bash
+gopro-yank login
+```
+
+That opens gopro.com in your browser, walks you through DevTools to copy
+the two cookies, validates them against the API, and saves them with the
+right permissions. Re-run it whenever your token expires.
+
+<details>
+<summary>Manual setup (if you'd rather not run the wizard)</summary>
 
 1. Log into <https://gopro.com/media-library/> in Chrome, Firefox, or Safari.
 2. Open DevTools (`Cmd+Opt+I` on Mac, `Ctrl+Shift+I` elsewhere).
@@ -64,9 +75,11 @@ USER_ID=your-user-id-uuid
 ```
 
 Restrict permissions: `chmod 600 ~/.config/gopro-yank/.env`.
+</details>
 
 Cookies eventually expire (GoPro doesn't publish how long). When you see
-`HTTP 401`, repeat the steps above and re-run — completed files are skipped.
+`HTTP 401`, the tool tells you exactly what to do — re-run `gopro-yank login`
+and try again. Completed files are skipped on resume.
 
 ## Usage
 
