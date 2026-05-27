@@ -3,7 +3,10 @@
 # render with:  vhs docs/demo.tape
 # output:       docs/demo.gif
 
-Output docs/demo.gif
+# Output filename embeds the current version so README image URL changes
+# every release — works around GitHub redirect-strips-query-string caching.
+# Bump this whenever the recording changes, and update the README accordingly.
+Output docs/demo-v0.2.1.gif
 
 Set Shell zsh
 Set FontSize 14
