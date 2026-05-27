@@ -17,10 +17,22 @@ from rich.table import Table
 from gopro_yank import __version__
 from gopro_yank.adaptive import AdaptiveLimiter
 from gopro_yank.api import AuthError, GoProClient, MediaItem
+from gopro_yank.demo import run_demo
 from gopro_yank.download import DownloadResult, download_one, yyyy_mm
 from gopro_yank.env import get_credentials
 from gopro_yank.progress import RichProgress
 from gopro_yank.state import Marker, MarkerStore
+
+
+def _default_out_dir() -> Path:
+    """Pick a sensible default destination for downloaded files.
+
+    - macOS: ~/Pictures/GoPro
+    - else: ./GoPro-Backup in the cwd
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Pictures" / "GoPro"
+    return Path.cwd() / "GoPro-Backup"
 
 MEDIA_LIBRARY_URL = "https://gopro.com/media-library/"
 
@@ -112,13 +124,16 @@ def _show_status_banner() -> None:
     facts.add_row("state markers", f"{marker_count} item(s) recorded as done")
 
     if not has_env:
-        next_cmd = "[bold cyan]gopro-yank login[/]  — paste cookies, validate, save"
+        next_cmd = (
+            "[bold cyan]gopro-yank login[/]  — paste cookies, validate, save\n"
+            "[dim]or[/] [cyan]gopro-yank demo[/]    — see the UI with simulated data (no creds)"
+        )
     elif marker_count == 0:
-        next_cmd = "[bold cyan]gopro-yank pull --out <directory>[/]  — first backup run"
+        next_cmd = "[bold cyan]gopro-yank pull[/]  — first backup run (asks where to save)"
     else:
         next_cmd = (
-            "[bold cyan]gopro-yank pull --out <directory>[/]  — resume / catch up\n"
-            "[dim]or[/] [cyan]gopro-yank status --out <directory>[/]  — see what's pending"
+            "[bold cyan]gopro-yank pull[/]    — resume / catch up\n"
+            "[dim]or[/] [cyan]gopro-yank status[/]  — see what's pending"
         )
 
     console.print(
@@ -140,9 +155,9 @@ def _show_status_banner() -> None:
 @click.option(
     "--out",
     "out",
-    required=True,
     type=click.Path(path_type=Path),
-    help="Directory where extracted files land. Organized into YYYY/MM/ subfolders.",
+    default=None,
+    help="Where extracted files land (organized into YYYY/MM/ subfolders). Prompted if omitted.",
 )
 @click.option(
     "--initial",
@@ -182,17 +197,25 @@ def _show_status_banner() -> None:
 def pull(
     env_file: Path,
     state_dir: Path,
-    out: Path,
+    out: Path | None,
     initial: int,
     ceiling: int,
     floor: int,
     grow_after: int,
     per_page: int,
 ) -> None:
-    """Download everything in the library (resumable). Default when no subcommand."""
+    """Download everything in the library (resumable)."""
     console = Console()
     token, user_id = _credentials_or_die(env_file, console)
     state = MarkerStore(state_dir)
+    if out is None:
+        default = _default_out_dir()
+        out_str = click.prompt(
+            "Where should files be saved?",
+            default=str(default),
+            type=str,
+        )
+        out = Path(out_str).expanduser()
     out.mkdir(parents=True, exist_ok=True)
     asyncio.run(
         _run_pull(
@@ -356,12 +379,22 @@ async def _run_list(
 
 @main.command()
 @_common
-@click.option("--out", "out", required=True, type=click.Path(path_type=Path))
-def status(env_file: Path, state_dir: Path, out: Path) -> None:
+@click.option(
+    "--out",
+    "out",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Where files were saved by pull. Prompted if omitted.",
+)
+def status(env_file: Path, state_dir: Path, out: Path | None) -> None:
     """Summarize what's done, what's pending, and what's on disk."""
     console = Console()
     token, user_id = _credentials_or_die(env_file, console)
     state = MarkerStore(state_dir)
+    if out is None:
+        out = Path(
+            click.prompt("Where are files saved?", default=str(_default_out_dir()))
+        ).expanduser()
     asyncio.run(_run_status(token, user_id, state, out, console))
 
 
@@ -410,7 +443,13 @@ async def _run_status(
 
 @main.command()
 @_common
-@click.option("--out", "out", required=True, type=click.Path(path_type=Path))
+@click.option(
+    "--out",
+    "out",
+    type=click.Path(path_type=Path),
+    default=None,
+    help="Where files were saved by pull. Prompted if omitted.",
+)
 @click.option(
     "--size-tolerance",
     default=0.01,
@@ -418,7 +457,9 @@ async def _run_status(
     type=float,
     help="Acceptable fractional difference between summed chapter sizes and API total.",
 )
-def verify(env_file: Path, state_dir: Path, out: Path, size_tolerance: float) -> None:
+def verify(
+    env_file: Path, state_dir: Path, out: Path | None, size_tolerance: float
+) -> None:
     """Check each marker's files exist and (for multi-chapter clips) sum to the
     media item's reported file_size within --size-tolerance.
 
@@ -428,6 +469,10 @@ def verify(env_file: Path, state_dir: Path, out: Path, size_tolerance: float) ->
     """
     console = Console()
     state = MarkerStore(state_dir)
+    if out is None:
+        out = Path(
+            click.prompt("Where are files saved?", default=str(_default_out_dir()))
+        ).expanduser()
     bad: list[tuple[str, str]] = []
     n = 0
     for marker_path in state.dir.glob("*.json"):
@@ -517,6 +562,64 @@ async def _run_manifest(
         console.print(f"wrote manifest: {out_file}")
     else:
         click.echo(payload)
+
+
+# ============================================================================
+# demo — simulated downloads, no credentials, full TUI
+# ============================================================================
+
+
+@main.command()
+@click.option("--count", default=24, show_default=True, type=int, help="Number of fake items.")
+@click.option("--initial", default=2, show_default=True, type=int)
+@click.option("--ceiling", default=8, show_default=True, type=int)
+@click.option("--floor", default=1, show_default=True, type=int)
+@click.option(
+    "--grow-after",
+    default=4,
+    show_default=True,
+    type=int,
+    help="Smaller than the real default so ramp-up is visible in seconds.",
+)
+@click.option(
+    "--target-mbps",
+    default=80.0,
+    show_default=True,
+    type=float,
+    help="Simulated per-worker throughput. Lower = slower demo.",
+)
+def demo(
+    count: int,
+    initial: int,
+    ceiling: int,
+    floor: int,
+    grow_after: int,
+    target_mbps: float,
+) -> None:
+    """Preview the UI against simulated data — no credentials required.
+
+    \b
+    Great for:
+      • seeing what gopro-yank looks like before installing creds
+      • recording screenshots / asciinema demos
+      • verifying a fresh install end-to-end
+    """
+    console = Console()
+    try:
+        asyncio.run(
+            run_demo(
+                count=count,
+                initial=initial,
+                ceiling=ceiling,
+                floor=floor,
+                grow_after=grow_after,
+                target_mbps=target_mbps,
+                console=console,
+            )
+        )
+    except KeyboardInterrupt:
+        console.print("\n[yellow]demo interrupted.[/]")
+        sys.exit(130)
 
 
 # ============================================================================

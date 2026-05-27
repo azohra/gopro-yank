@@ -32,18 +32,26 @@ no failures except 3 `MultiClipEdit` items (edit timelines, not media).
 ## Install
 
 ```bash
-pipx install gopro-yank
-```
+# with pipx
+pipx install git+https://github.com/azohra/gopro-yank
 
-Or from source:
+# or with uv
+uv tool install git+https://github.com/azohra/gopro-yank
 
-```bash
-git clone https://github.com/azohra/gopro-yank
-cd gopro-yank
-pip install .
+# or from source
+git clone https://github.com/azohra/gopro-yank && cd gopro-yank && pip install .
 ```
 
 Requires Python 3.10+.
+
+## See it work in 10 seconds
+
+```bash
+gopro-yank demo
+```
+
+Runs the full TUI against simulated downloads — no credentials needed. The
+concurrency in the header ramps up as fake "downloads" succeed.
 
 ## Getting your credentials
 
