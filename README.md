@@ -44,6 +44,25 @@ git clone https://github.com/azohra/gopro-yank && cd gopro-yank && pip install .
 
 Requires Python 3.10+.
 
+### Upgrading
+
+`pipx install --force` is unreliable when pipx uses uv as its backend (it
+refuses to clobber the existing venv and silently keeps the old version). Use:
+
+```bash
+pipx reinstall gopro-yank
+# or
+pipx uninstall gopro-yank && pipx install git+https://github.com/azohra/gopro-yank
+```
+
+For uv:
+
+```bash
+uv tool install --reinstall git+https://github.com/azohra/gopro-yank
+```
+
+Verify with `gopro-yank --version`.
+
 ## See it work in 10 seconds
 
 ```bash
