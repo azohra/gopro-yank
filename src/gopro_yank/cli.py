@@ -14,7 +14,7 @@ from pathlib import Path
 import click
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Prompt
+from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from gopro_yank import __version__
@@ -688,72 +688,56 @@ def _capture_cookie(
     expected_prefix: str | None,
     *,
     use_paste: bool,
+    clipboard_ok: bool,
 ) -> str:
-    """Capture one cookie value, preferring clipboard read on macOS/Linux/Win.
+    """Capture one cookie value.
 
-    If --paste was given (or clipboard tools aren't available), falls back to
-    Rich's Prompt for direct entry. The prompt also serves as a fallback when
-    the clipboard contents don't pass a basic sanity check.
+    Clipboard flow (default on macOS/Linux/Win): tell the user what to copy,
+    then wait for Enter, *then* read the clipboard. This avoids reading stale
+    contents (the bug if we read at prompt-time before they've had a chance
+    to copy) and gives them a confirmable preview.
+
+    Direct-paste flow (`--paste` or no clipboard tool): falls back to Rich
+    Prompt, which renders markup and accepts up to the terminal's MAX_CANON
+    limit (~1024 chars on macOS — fine for the UUID but borderline for JWTs).
     """
     console.print()
     console.rule(f"[bold cyan]{label}[/]")
-    if expected_prefix:
+    if expected_prefix == "eyJ":
         console.print(
-            f"  expected to start with [dim]{expected_prefix}[/] "
-            f"and be long ([dim]hundreds–thousands of characters[/])"
-            if expected_prefix == "eyJ"
-            else f"  expected format: [dim]{expected_prefix}…[/]"
+            "  [dim]expected: a long JWT, hundreds–thousands of chars, "
+            f"starting with [bold]{expected_prefix}[/dim][/]"
         )
+    elif expected_prefix:
+        console.print(f"  [dim]expected format: {expected_prefix}…[/]")
 
     while True:
-        clip = None if use_paste else _read_clipboard()
-        if clip:
-            clip = clip.strip()
-            ok = (
-                len(clip) >= 16
-                and (expected_prefix is None or clip.startswith(expected_prefix))
-            )
-            if ok:
-                console.print(
-                    f"  [green]✓[/] read [bold]{len(clip)}[/] chars from clipboard "
-                    f"[dim](preview: {_preview(clip)})[/]"
-                )
-                if Prompt.ask(
-                    "  Use this value?",
-                    choices=["y", "n", "p"],
-                    default="y",
-                    show_choices=False,
-                    show_default=False,
-                ).lower() in ("y", ""):
-                    return clip
-                console.print(
-                    "  [dim]ok — choose [bold]p[/dim] to type/paste manually, "
-                    "or recopy the right value and we'll try again.[/]"
-                )
-            else:
-                preview = _preview(clip) if clip else "(empty)"
-                console.print(
-                    f"  [yellow]clipboard doesn't look right[/] "
-                    f"[dim](got: {preview})[/]"
-                )
-
-        # Manual paste fallback. Rich's Prompt renders markup and handles long
-        # input *better* than click.prompt, but raw terminal line limits still
-        # apply on POSIX. Warn for very-long-expected fields.
-        if expected_prefix == "eyJ":
+        if use_paste or not clipboard_ok:
+            value = Prompt.ask(f"  paste [cyan]{label}[/]", console=console).strip()
+        else:
             console.print(
-                "  [yellow]heads up:[/] terminals cap pasted lines at ~1024 chars on macOS.\n"
-                "  if pasting fails, hit Ctrl-C and re-run — clipboard read will pick it up."
+                f"  In DevTools, copy the [bold cyan]{label}[/] [bold]Value[/], then come back here."
             )
-        value = Prompt.ask(f"  {label}", console=console).strip()
-        if not value:
-            continue
+            console.input(f"  [dim]press Enter when it's on your clipboard ›[/dim] ")
+            value = (_read_clipboard() or "").strip()
+            if not value:
+                console.print("  [yellow]clipboard was empty — try again.[/]")
+                continue
+            console.print(
+                f"  [green]✓[/] got [bold]{len(value)}[/] chars "
+                f"[dim](preview: {_preview(value)})[/]"
+            )
+
         if expected_prefix and not value.startswith(expected_prefix):
             console.print(
                 f"  [yellow]⚠[/]  doesn't start with [dim]{expected_prefix}[/] — "
-                "continuing anyway."
+                "did you copy the right cookie?"
             )
-        return value
+            if not Confirm.ask("  use it anyway?", default=False, console=console):
+                continue
+
+        if Confirm.ask("  looks right?", default=True, console=console):
+            return value
 
 
 @main.command()
@@ -819,16 +803,19 @@ def login(env_file: Path, no_browser: bool, force: bool, use_paste: bool) -> Non
             except Exception:  # noqa: BLE001
                 console.print(f"[yellow]couldn't open browser; visit {MEDIA_LIBRARY_URL} manually.[/]")
 
-    if not use_paste and clipboard_ok:
-        console.print(
-            "\n[bold]for each cookie:[/]  copy its [bold]Value[/] in DevTools, then press [bold]Enter[/] below."
-        )
-
     token = _capture_cookie(
-        console, "gp_access_token", expected_prefix="eyJ", use_paste=use_paste
+        console,
+        "gp_access_token",
+        expected_prefix="eyJ",
+        use_paste=use_paste,
+        clipboard_ok=clipboard_ok,
     )
     user_id = _capture_cookie(
-        console, "gp_user_id", expected_prefix=None, use_paste=use_paste
+        console,
+        "gp_user_id",
+        expected_prefix=None,
+        use_paste=use_paste,
+        clipboard_ok=clipboard_ok,
     )
 
     console.print()
