@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import shutil
+import subprocess
 import sys
 import webbrowser
 from collections.abc import Iterable
@@ -12,6 +14,7 @@ from pathlib import Path
 import click
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import Prompt
 from rich.table import Table
 
 from gopro_yank import __version__
@@ -33,6 +36,42 @@ def _default_out_dir() -> Path:
     if sys.platform == "darwin":
         return Path.home() / "Pictures" / "GoPro"
     return Path.cwd() / "GoPro-Backup"
+
+
+def _read_clipboard() -> str | None:
+    """Best-effort cross-platform clipboard read. Returns None if unavailable.
+
+    Used during `login` to capture cookies without having the user paste them
+    into a terminal prompt — which is unreliable for long strings because
+    POSIX canonical-mode tty input caps lines at MAX_CANON (~1024 bytes) and
+    GoPro JWTs are routinely 1500+ chars.
+    """
+    cmds: list[list[str]] = []
+    if sys.platform == "darwin":
+        cmds = [["pbpaste"]]
+    elif sys.platform.startswith("linux"):
+        cmds = [
+            ["wl-paste", "--no-newline"],
+            ["xclip", "-selection", "clipboard", "-o"],
+            ["xsel", "--clipboard", "--output"],
+        ]
+    elif sys.platform == "win32":
+        cmds = [["powershell", "-NoProfile", "-Command", "Get-Clipboard"]]
+    for cmd in cmds:
+        if not shutil.which(cmd[0]):
+            continue
+        try:
+            out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+            return out.rstrip("\r\n")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            continue
+    return None
+
+
+def _preview(s: str, head: int = 24) -> str:
+    if len(s) <= head:
+        return s
+    return f"{s[:head]}…"
 
 MEDIA_LIBRARY_URL = "https://gopro.com/media-library/"
 
@@ -628,18 +667,93 @@ def demo(
 
 
 _LOGIN_INTRO = """\
-[bold]gopro-yank login[/] — walk through getting your two API cookies.
+[bold]gopro-yank login[/] — capture your two API cookies from gopro.com.
 
 In the browser:
   1. Make sure you're [bold]signed in[/] at [cyan]gopro.com[/]
   2. Open DevTools — [bold]Cmd+Opt+I[/] (Mac) or [bold]Ctrl+Shift+I[/] (other)
   3. Go to [bold]Application[/] tab → [bold]Storage[/] → [bold]Cookies[/] → [cyan]https://gopro.com[/]
-  4. Find these two rows and copy the [bold]Value[/] column:
+  4. Find these two rows; you'll copy each [bold]Value[/] in turn:
        • [cyan]gp_access_token[/]  (long JWT, starts with [dim]eyJhbGc...[/])
        • [cyan]gp_user_id[/]       (UUID like [dim]00000000-0000-0000-0000-000000000000[/])
 
-I'll prompt for each value below. Paste, press Enter.
+I'll read each value from your clipboard so long tokens don't get mangled by
+your terminal's line-length limit.
 """
+
+
+def _capture_cookie(
+    console: Console,
+    label: str,
+    expected_prefix: str | None,
+    *,
+    use_paste: bool,
+) -> str:
+    """Capture one cookie value, preferring clipboard read on macOS/Linux/Win.
+
+    If --paste was given (or clipboard tools aren't available), falls back to
+    Rich's Prompt for direct entry. The prompt also serves as a fallback when
+    the clipboard contents don't pass a basic sanity check.
+    """
+    console.print()
+    console.rule(f"[bold cyan]{label}[/]")
+    if expected_prefix:
+        console.print(
+            f"  expected to start with [dim]{expected_prefix}[/] "
+            f"and be long ([dim]hundreds–thousands of characters[/])"
+            if expected_prefix == "eyJ"
+            else f"  expected format: [dim]{expected_prefix}…[/]"
+        )
+
+    while True:
+        clip = None if use_paste else _read_clipboard()
+        if clip:
+            clip = clip.strip()
+            ok = (
+                len(clip) >= 16
+                and (expected_prefix is None or clip.startswith(expected_prefix))
+            )
+            if ok:
+                console.print(
+                    f"  [green]✓[/] read [bold]{len(clip)}[/] chars from clipboard "
+                    f"[dim](preview: {_preview(clip)})[/]"
+                )
+                if Prompt.ask(
+                    "  Use this value?",
+                    choices=["y", "n", "p"],
+                    default="y",
+                    show_choices=False,
+                    show_default=False,
+                ).lower() in ("y", ""):
+                    return clip
+                console.print(
+                    "  [dim]ok — choose [bold]p[/dim] to type/paste manually, "
+                    "or recopy the right value and we'll try again.[/]"
+                )
+            else:
+                preview = _preview(clip) if clip else "(empty)"
+                console.print(
+                    f"  [yellow]clipboard doesn't look right[/] "
+                    f"[dim](got: {preview})[/]"
+                )
+
+        # Manual paste fallback. Rich's Prompt renders markup and handles long
+        # input *better* than click.prompt, but raw terminal line limits still
+        # apply on POSIX. Warn for very-long-expected fields.
+        if expected_prefix == "eyJ":
+            console.print(
+                "  [yellow]heads up:[/] terminals cap pasted lines at ~1024 chars on macOS.\n"
+                "  if pasting fails, hit Ctrl-C and re-run — clipboard read will pick it up."
+            )
+        value = Prompt.ask(f"  {label}", console=console).strip()
+        if not value:
+            continue
+        if expected_prefix and not value.startswith(expected_prefix):
+            console.print(
+                f"  [yellow]⚠[/]  doesn't start with [dim]{expected_prefix}[/] — "
+                "continuing anyway."
+            )
+        return value
 
 
 @main.command()
@@ -661,12 +775,19 @@ I'll prompt for each value below. Paste, press Enter.
     is_flag=True,
     help="Overwrite an existing env file without confirming.",
 )
-def login(env_file: Path, no_browser: bool, force: bool) -> None:
-    """Interactive cookie capture: paste, validate, save.
+@click.option(
+    "--paste",
+    "use_paste",
+    is_flag=True,
+    help="Skip clipboard auto-read; prompt for direct input instead.",
+)
+def login(env_file: Path, no_browser: bool, force: bool, use_paste: bool) -> None:
+    """Interactive cookie capture: clipboard-first, validate, save.
 
-    Opens gopro.com in your browser, walks you through DevTools, prompts for
-    the two cookie values, validates them against the GoPro API, and saves to
-    a .env file with mode 600.
+    On macOS, Linux (with xclip/xsel/wl-paste), or Windows, reads each cookie
+    from your clipboard so long JWTs don't get truncated by the terminal's
+    line-length limit. Falls back to direct prompt if the clipboard isn't
+    available.
     """
     console = Console()
 
@@ -678,7 +799,15 @@ def login(env_file: Path, no_browser: bool, force: bool) -> None:
             console.print("[yellow]aborted — existing file kept.[/]")
             sys.exit(1)
 
-    console.print(Panel(_LOGIN_INTRO, border_style="cyan", title="step 1 — get the cookies"))
+    console.print(Panel(_LOGIN_INTRO, border_style="cyan", title="how this works"))
+
+    clipboard_ok = _read_clipboard() is not None
+    if not use_paste and not clipboard_ok:
+        console.print(
+            "[yellow]no clipboard tool available — falling back to direct prompts. "
+            "if your token is very long, run with [bold]--paste[/] and use a graphical "
+            "editor as a workaround, or install xclip/wl-clipboard on Linux.[/]"
+        )
 
     if not no_browser:
         if click.confirm(
@@ -690,15 +819,17 @@ def login(env_file: Path, no_browser: bool, force: bool) -> None:
             except Exception:  # noqa: BLE001
                 console.print(f"[yellow]couldn't open browser; visit {MEDIA_LIBRARY_URL} manually.[/]")
 
-    console.print()
-    token = click.prompt("[bold cyan]gp_access_token[/]", prompt_suffix=" › ").strip()
-    user_id = click.prompt("[bold cyan]gp_user_id[/]", prompt_suffix=" › ").strip()
-
-    if not token.startswith("eyJ"):
+    if not use_paste and clipboard_ok:
         console.print(
-            "[yellow]⚠[/]  that doesn't look like a JWT (expected to start with [dim]eyJ[/]). "
-            "Continuing anyway — we'll find out for sure when we validate."
+            "\n[bold]for each cookie:[/]  copy its [bold]Value[/] in DevTools, then press [bold]Enter[/] below."
         )
+
+    token = _capture_cookie(
+        console, "gp_access_token", expected_prefix="eyJ", use_paste=use_paste
+    )
+    user_id = _capture_cookie(
+        console, "gp_user_id", expected_prefix=None, use_paste=use_paste
+    )
 
     console.print()
     me: dict | None = None
@@ -718,15 +849,15 @@ def login(env_file: Path, no_browser: bool, force: bool) -> None:
     try:
         env_file.chmod(0o600)
     except OSError:
-        pass  # Windows or unusual filesystems — don't crash, but warn
+        pass
 
     who = me.get("email") or me.get("id") or user_id if me else user_id
     console.print(f"[green]✓ logged in[/] as [bold]{who}[/]")
     console.print(f"  saved to [dim]{env_file}[/]")
     console.print()
     console.print("[bold]Next:[/]")
-    console.print("  [cyan]gopro-yank list[/]                   show your library")
-    console.print("  [cyan]gopro-yank pull --out <directory>[/] download everything")
+    console.print("  [cyan]gopro-yank list[/]   show your library")
+    console.print("  [cyan]gopro-yank pull[/]   download everything (prompts for destination)")
 
 
 async def _validate_creds(token: str, user_id: str) -> dict:

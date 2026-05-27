@@ -1,9 +1,7 @@
-"""Tests for the `login` command. Heavy mocking — we can't hit the live API.
+"""Tests for the `login` command.
 
-We exercise:
-  - refusing to overwrite an existing env file without --force or confirmation
-  - writing the env file with mode 600 after a successful validation
-  - exiting nonzero on AuthError from validation
+We force `--paste` mode so the tests don't depend on whatever's in the dev's
+real clipboard. _validate_creds is mocked since we can't reach the real API.
 """
 
 from __future__ import annotations
@@ -28,14 +26,13 @@ def test_login_writes_env_on_success(tmp_path: Path) -> None:
     with patch("gopro_yank.cli._validate_creds", side_effect=fake_validate):
         result = runner.invoke(
             main,
-            ["login", "--env-file", str(env_file), "--no-browser"],
-            input="JWT_VALUE\nUSER_VALUE\n",
+            ["login", "--env-file", str(env_file), "--no-browser", "--paste"],
+            input="eyJ_TEST_JWT\nUSER_VALUE\n",
         )
     assert result.exit_code == 0, result.output
     body = env_file.read_text()
-    assert "AUTH_TOKEN=JWT_VALUE" in body
+    assert "AUTH_TOKEN=eyJ_TEST_JWT" in body
     assert "USER_ID=USER_VALUE" in body
-    # Mode 600
     assert env_file.stat().st_mode & 0o777 == 0o600
 
 
@@ -43,14 +40,12 @@ def test_login_refuses_overwrite_without_confirm(tmp_path: Path) -> None:
     env_file = tmp_path / ".env"
     env_file.write_text("AUTH_TOKEN=existing\nUSER_ID=existing\n")
     runner = CliRunner()
-    # Answer 'n' to the overwrite confirmation
     result = runner.invoke(
         main,
-        ["login", "--env-file", str(env_file), "--no-browser"],
+        ["login", "--env-file", str(env_file), "--no-browser", "--paste"],
         input="n\n",
     )
     assert result.exit_code != 0
-    # Untouched
     assert "existing" in env_file.read_text()
 
 
@@ -65,11 +60,11 @@ def test_login_force_overwrites(tmp_path: Path) -> None:
     with patch("gopro_yank.cli._validate_creds", side_effect=fake_validate):
         result = runner.invoke(
             main,
-            ["login", "--env-file", str(env_file), "--no-browser", "--force"],
-            input="NEW_JWT\nNEW_USER\n",
+            ["login", "--env-file", str(env_file), "--no-browser", "--paste", "--force"],
+            input="eyJ_NEW_JWT\nNEW_USER\n",
         )
     assert result.exit_code == 0, result.output
-    assert "NEW_JWT" in env_file.read_text()
+    assert "eyJ_NEW_JWT" in env_file.read_text()
     assert "old" not in env_file.read_text()
 
 
@@ -83,10 +78,9 @@ def test_login_exits_on_auth_error(tmp_path: Path) -> None:
     with patch("gopro_yank.cli._validate_creds", side_effect=fake_validate):
         result = runner.invoke(
             main,
-            ["login", "--env-file", str(env_file), "--no-browser"],
-            input="bad\nbad\n",
+            ["login", "--env-file", str(env_file), "--no-browser", "--paste"],
+            input="eyJ_BAD\nBAD\n",
         )
     assert result.exit_code != 0
     assert "rejected by GoPro" in result.output
-    # No file should have been created
     assert not env_file.exists()
