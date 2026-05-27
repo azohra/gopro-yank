@@ -16,7 +16,7 @@
     Async &middot; resumable &middot; adaptive concurrency &middot; one command to install &middot; one command to see it work
   </p>
 
-  <img src="docs/demo.gif" alt="gopro-yank demo" width="780" />
+  <img src="docs/demo.gif?v=0.2.1" alt="gopro-yank demo" width="780" />
 </div>
 
 ---
