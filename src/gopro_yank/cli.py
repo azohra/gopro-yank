@@ -368,47 +368,214 @@ async def _run_pull(
 
 @main.command("list")
 @_common
+@click.option("--per-page", default=30, show_default=True, type=int)
 @click.option(
-    "--per-page", default=30, show_default=True, type=int,
+    "--all",
+    "show_all",
+    is_flag=True,
+    help="Print every item. Without this flag, you get a summary + sample.",
+)
+@click.option(
+    "--pending",
+    is_flag=True,
+    help="Only show items not yet downloaded.",
+)
+@click.option(
+    "--done",
+    is_flag=True,
+    help="Only show items already downloaded.",
+)
+@click.option(
+    "--limit",
+    default=10,
+    show_default=True,
+    type=int,
+    help="Number of items to show at head and tail of the sample (ignored with --all).",
 )
 @click.option("--json", "as_json", is_flag=True, help="Emit raw JSON, one item per line.")
-def list_cmd(env_file: Path, state_dir: Path, per_page: int, as_json: bool) -> None:
-    """List every item in the library and its done/pending state."""
+def list_cmd(
+    env_file: Path,
+    state_dir: Path,
+    per_page: int,
+    show_all: bool,
+    pending: bool,
+    done: bool,
+    limit: int,
+    as_json: bool,
+) -> None:
+    """Summarize your library: counts, sizes, date range, with a sample.
+
+    \b
+    By default, prints:
+      • a stats panel (counts by status, total size, date range, year breakdown)
+      • the first + last N items as a sample
+
+    Use --all to print every item, --pending/--done to filter, --json to stream
+    raw API records (one item per line) for piping into jq.
+    """
+    if pending and done:
+        click.echo("--pending and --done are mutually exclusive", err=True)
+        sys.exit(2)
     console = Console()
     token, user_id = _credentials_or_die(env_file, console)
     state = MarkerStore(state_dir)
-    asyncio.run(_run_list(token, user_id, state, per_page, as_json, console))
+    asyncio.run(
+        _run_list(
+            token, user_id, state, per_page, show_all, pending, done, limit, as_json, console
+        )
+    )
+
+
+def _human_bytes(n: int | None) -> str:
+    if n is None:
+        return "—"
+    if n == 0:
+        return "0 B"
+    for unit in ("B", "KB", "MB", "GB", "TB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} PB"
+
+
+def _render_item_row(it: MediaItem, state: MarkerStore) -> tuple[str, str, str, str, str]:
+    is_done = state.has(it.id)
+    status = "[green]done[/]" if is_done else "[yellow]todo[/]"
+    size = _human_bytes(it.file_size)
+    created = (it.created_at or "—")[:10]  # YYYY-MM-DD
+    return status, it.filename or "—", size, created, it.id
+
+
+def _list_table(rows: Iterable[tuple]) -> Table:
+    t = Table(show_header=True, header_style="bold", show_lines=False, expand=True)
+    t.add_column("status", no_wrap=True)
+    t.add_column("filename")
+    t.add_column("size", justify="right", no_wrap=True)
+    t.add_column("created", no_wrap=True)
+    t.add_column("id", style="dim", no_wrap=True)
+    for row in rows:
+        t.add_row(*row)
+    return t
 
 
 async def _run_list(
-    token: str, user_id: str, state: MarkerStore, per_page: int, as_json: bool, console: Console
+    token: str,
+    user_id: str,
+    state: MarkerStore,
+    per_page: int,
+    show_all: bool,
+    pending: bool,
+    done: bool,
+    limit: int,
+    as_json: bool,
+    console: Console,
 ) -> None:
+    from rich.console import Group
+
     async with GoProClient(token, user_id) as client:
         try:
             await client.validate()
         except AuthError as e:
             _die_auth(console, str(e))
 
+        # JSON path streams without buffering — efficient for huge libraries.
         if as_json:
             async for it in client.iter_media(per_page=per_page):
-                done = state.has(it.id)
-                click.echo(json.dumps({**it.raw, "_done": done}))
+                marker = state.read(it.id)
+                payload = {**it.raw, "_done": state.has(it.id)}
+                if marker and marker.get("status") == "skipped":
+                    payload["_skipped"] = True
+                click.echo(json.dumps(payload))
             return
 
-        t = Table(title="GoPro library", show_lines=False, expand=True)
-        t.add_column("status", style="bold")
-        t.add_column("filename")
-        t.add_column("size", justify="right")
-        t.add_column("created")
-        t.add_column("id", style="dim")
-        n = 0
-        async for it in client.iter_media(per_page=per_page):
-            status = "[green]done[/]" if state.has(it.id) else "[yellow]todo[/]"
-            size = f"{(it.file_size or 0) / 1024**2:.1f} MB" if it.file_size else "—"
-            t.add_row(status, it.filename or "—", size, it.created_at or "—", it.id)
-            n += 1
-        console.print(t)
-        console.print(f"[dim]{n} items[/]")
+        with console.status("[cyan]fetching library...[/]"):
+            items = await client.list_all(per_page=per_page)
+
+    # Filter
+    def included(it: MediaItem) -> bool:
+        is_done = state.has(it.id)
+        if pending and is_done:
+            return False
+        if done and not is_done:
+            return False
+        return True
+
+    filtered = [it for it in items if included(it)]
+
+    # Stats over the *original* library (not the filter) so summary numbers
+    # match what `status` would report.
+    n_total = len(items)
+    n_done = sum(1 for it in items if state.has(it.id))
+    n_skipped = sum(
+        1
+        for it in items
+        if (m := state.read(it.id)) and m.get("status") == "skipped"
+    )
+    n_pending = n_total - n_done
+    total_bytes = sum(int(it.file_size or 0) for it in items)
+    dates = sorted(it.created_at[:10] for it in items if it.created_at)
+    date_range = f"{dates[0]} → {dates[-1]}" if dates else "—"
+
+    # Year breakdown
+    years: dict[str, int] = {}
+    for it in items:
+        if it.created_at and len(it.created_at) >= 4:
+            y = it.created_at[:4]
+            years[y] = years.get(y, 0) + 1
+
+    facts = Table.grid(padding=(0, 2))
+    facts.add_column(style="bold cyan", no_wrap=True)
+    facts.add_column()
+    facts.add_row("library", f"{n_total} items   {_human_bytes(total_bytes)}")
+    facts.add_row(
+        "status",
+        f"[green]{n_done} done[/]   "
+        + (f"[dim]{n_skipped} skipped[/]   " if n_skipped else "")
+        + f"[yellow]{n_pending - n_skipped} pending[/]"
+        if n_skipped
+        else f"[green]{n_done} done[/]   [yellow]{n_pending} pending[/]",
+    )
+    facts.add_row("date range", date_range)
+    if years:
+        year_str = "   ".join(
+            f"[bold]{y}[/]: {c}" for y, c in sorted(years.items())
+        )
+        facts.add_row("by year", year_str)
+
+    label = "library"
+    if pending:
+        label = f"pending ({len(filtered)} item{'s' if len(filtered) != 1 else ''})"
+    elif done:
+        label = f"done ({len(filtered)} item{'s' if len(filtered) != 1 else ''})"
+
+    console.print(Panel(facts, title=f"[bold]{label}[/]", border_style="cyan"))
+
+    if not filtered:
+        console.print("[dim]nothing to list under that filter.[/]")
+        return
+
+    rows = [_render_item_row(it, state) for it in filtered]
+
+    if show_all or len(filtered) <= 2 * limit + 1:
+        console.print(_list_table(rows))
+    else:
+        head = rows[:limit]
+        tail = rows[-limit:]
+        ellipsis = (
+            "[dim italic]…[/]",
+            f"[dim italic]({len(filtered) - 2 * limit} more — pass --all to see them)[/]",
+            "",
+            "",
+            "",
+        )
+        console.print(_list_table([*head, ellipsis, *tail]))
+
+    if not show_all and len(filtered) > 2 * limit + 1:
+        console.print(
+            "[dim]tip:[/] [cyan]gopro-yank list --all[/]  "
+            "[dim]·[/]  [cyan]--pending[/]  "
+            "[dim]·[/]  [cyan]--json | jq[/]"
+        )
 
 
 # ============================================================================
