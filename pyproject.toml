@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gopro-yank"
-version = "0.1.3"
+version = "0.2.0"
 description = "Bulk-download your entire GoPro Plus cloud library before cancelling. Async, resumable, adaptive parallelism."
 readme = "README.md"
 license = { file = "LICENSE" }
