@@ -43,30 +43,39 @@ git -C "$project_root" archive \
   --prefix=gopro-yank/ \
   --output="$output_dir/gopro-yank_source.tar.gz" \
   'HEAD^{tree}' -- .env.example .github cmd docs internal scripts go.mod Makefile LICENSE README.md
-source_sha=$(shasum -a 256 "$output_dir/gopro-yank_source.tar.gz" | awk '{print $1}')
 
-cat > "$output_dir/gopro-yank.rb" <<FORMULA
-class GoproYank < Formula
+darwin_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_amd64.tar.gz" | awk '{print $1}')
+darwin_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_arm64.tar.gz" | awk '{print $1}')
+linux_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_linux_amd64.tar.gz" | awk '{print $1}')
+linux_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_linux_arm64.tar.gz" | awk '{print $1}')
+
+cat > "$output_dir/gopro-yank.rb" <<CASK
+cask "gopro-yank" do
+  arch arm: "arm64", intel: "amd64"
+  os macos: "darwin", linux: "linux"
+
+  version "${release_version}"
+  sha256 arm:          "${darwin_arm64_sha}",
+         intel:        "${darwin_amd64_sha}",
+         arm64_linux:  "${linux_arm64_sha}",
+         x86_64_linux: "${linux_amd64_sha}"
+
+  on_macos do
+    postflight do
+      system_command "/usr/bin/xattr",
+                     args: ["-d", "com.apple.quarantine", "#{staged_path}/gopro-yank"]
+    end
+  end
+
+  url "https://github.com/azohra/gopro-yank/releases/download/v#{version}/gopro-yank_#{os}_#{arch}.tar.gz"
+  name "GoPro Yank"
   desc "Download and verify every GoPro cloud original"
   homepage "https://github.com/azohra/gopro-yank"
-  url "https://github.com/azohra/gopro-yank/releases/download/v${release_version}/gopro-yank_source.tar.gz"
-  sha256 "${source_sha}"
-  license "MIT"
-  head "https://github.com/azohra/gopro-yank.git", branch: "main"
 
-  depends_on "go" => :build
-
-  def install
-    ldflags = "-s -w -X main.version=#{version}"
-    system "go", "build", *std_go_args(ldflags: ldflags), "./cmd/gopro-yank"
-  end
-
-  test do
-    assert_match version.to_s, shell_output("#{bin}/gopro-yank --version")
-  end
+  binary "gopro-yank"
 end
-FORMULA
+CASK
 
 (cd "$output_dir" && shasum -a 256 gopro-yank_* > checksums.txt)
 echo "Release artifacts: $output_dir"
-echo "Homebrew formula asset: $output_dir/gopro-yank.rb"
+echo "Homebrew cask asset: $output_dir/gopro-yank.rb"
