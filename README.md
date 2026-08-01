@@ -36,11 +36,10 @@ Download the asset for your computer from
 Check the download against `checksums.txt`, put the executable on `PATH`, and
 run `gopro-yank demo`.
 
-Or build the release source with Homebrew:
+Or let Homebrew download, build, and install it:
 
 ```sh
-brew tap azohra/gopro-yank https://github.com/azohra/gopro-yank
-brew install gopro-yank
+brew install azohra/tools/gopro-yank
 ```
 
 ## Download your library

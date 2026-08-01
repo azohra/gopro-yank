@@ -45,7 +45,7 @@ git -C "$project_root" archive \
   'HEAD^{tree}' -- .env.example .github cmd docs internal scripts go.mod Makefile LICENSE README.md
 source_sha=$(shasum -a 256 "$output_dir/gopro-yank_source.tar.gz" | awk '{print $1}')
 
-cat > "$project_root/Formula/gopro-yank.rb" <<FORMULA
+cat > "$output_dir/gopro-yank.rb" <<FORMULA
 class GoproYank < Formula
   desc "Download and verify every GoPro cloud original"
   homepage "https://github.com/azohra/gopro-yank"
@@ -69,4 +69,4 @@ FORMULA
 
 (cd "$output_dir" && shasum -a 256 gopro-yank_* > checksums.txt)
 echo "Release artifacts: $output_dir"
-echo "Homebrew formula: $project_root/Formula/gopro-yank.rb"
+echo "Homebrew formula asset: $output_dir/gopro-yank.rb"
