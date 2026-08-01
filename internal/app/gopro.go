@@ -31,17 +31,17 @@ type MediaItem struct {
 }
 
 type GoProClient struct {
-	Token, UserID, BaseURL string
-	HTTP                   *http.Client
+	Token, BaseURL string
+	HTTP           *http.Client
 }
 
-func NewGoProClient(token, userID string) *GoProClient {
+func NewGoProClient(token string) *GoProClient {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.MaxIdleConns, transport.MaxIdleConnsPerHost = 32, 32
 	transport.DialContext = (&net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}).DialContext
 	transport.TLSHandshakeTimeout = 15 * time.Second
 	transport.ResponseHeaderTimeout = 2 * time.Minute
-	return &GoProClient{Token: token, UserID: userID, BaseURL: apiBaseURL, HTTP: &http.Client{Transport: transport}}
+	return &GoProClient{Token: token, BaseURL: apiBaseURL, HTTP: &http.Client{Transport: transport}}
 }
 
 func (c *GoProClient) request(ctx context.Context, method, endpoint string, query url.Values) (*http.Response, error) {
@@ -56,7 +56,6 @@ func (c *GoProClient) request(ctx context.Context, method, endpoint string, quer
 	request.Header.Set("Accept", "application/vnd.gopro.jk.media+json; version=2.0.0")
 	request.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
 	request.AddCookie(&http.Cookie{Name: "gp_access_token", Value: c.Token})
-	request.AddCookie(&http.Cookie{Name: "gp_user_id", Value: c.UserID})
 	return c.HTTP.Do(request)
 }
 

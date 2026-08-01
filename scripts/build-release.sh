@@ -42,7 +42,7 @@ git -C "$project_root" archive \
   --mtime=1970-01-01T00:00:00Z \
   --prefix=gopro-yank/ \
   --output="$output_dir/gopro-yank_source.tar.gz" \
-  'HEAD^{tree}' -- .env.example .github cmd docs internal scripts go.mod Makefile LICENSE README.md
+  'HEAD^{tree}' -- .env.example .github cmd docs internal scripts go.mod go.sum Makefile LICENSE README.md
 
 darwin_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_amd64.tar.gz" | awk '{print $1}')
 darwin_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_arm64.tar.gz" | awk '{print $1}')

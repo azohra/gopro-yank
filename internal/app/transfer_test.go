@@ -31,7 +31,7 @@ func zipBytes(t *testing.T, files map[string][]byte) []byte {
 }
 func zipClient(payload []byte) (*GoProClient, func()) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write(payload) }))
-	client := NewGoProClient("token", "user")
+	client := NewGoProClient("token")
 	client.BaseURL = server.URL
 	return client, server.Close
 }
