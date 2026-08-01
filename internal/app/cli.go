@@ -54,7 +54,7 @@ func defaultLegacyState() string {
 const mediaLibraryURL = "https://gopro.com/media-library/"
 
 func usage() {
-	fmt.Print(`gopro-yank — export every GoPro original and prove what made it home
+	fmt.Print(`gopro-yank — your originals, home and accounted for
 
 Usage:
   gopro-yank <command> [options]
@@ -575,15 +575,18 @@ func demoCommand(args []string) error {
 	if *count < 1 {
 		return errors.New("count must be positive")
 	}
-	fmt.Printf("GoPro Yank demo: %d simulated items\n", *count)
-	var total int64
+	total := int64(0)
+	for index := 1; index <= *count; index++ {
+		total += int64(128+index*17) * 1024 * 1024
+	}
+	fmt.Printf("GOPRO YANK / DEMO\nYour originals. Home and accounted for.\n\nsource    %d simulated originals · %s\narchive   portable + resumable\n\n", *count, humanBytes(total))
 	for index := 1; index <= *count; index++ {
 		size := int64(128+index*17) * 1024 * 1024
-		total += size
-		fmt.Printf("✓ %d/%d · demo-%03d · %s\n", index, *count, index, humanBytes(size))
-		time.Sleep(15 * time.Millisecond)
+		fmt.Printf("✓ %02d/%02d  demo-%03d  %9s  SHA-256\n", index, *count, index, humanBytes(size))
+		time.Sleep(90 * time.Millisecond)
 	}
-	fmt.Printf("✓ demo complete · %s transferred\n", humanBytes(total))
+	fmt.Println("\nproof     manifest · checksums · offline report")
+	fmt.Println("verdict   DOWNLOADABLE MEDIA EXPORT COMPLETE")
 	return nil
 }
 

@@ -1,48 +1,46 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/azohra/gopro-yank/main/docs/logo.svg" width="160" alt="gopro-yank" />
-  <h1>gopro-yank</h1>
-  <p><strong>Export every GoPro original. Preserve its record. Prove what made it home.</strong></p>
+  <img src="docs/hero.svg" width="100%" alt="GoPro Yank — your originals, home and accounted for" />
   <p>
-    <a href="https://github.com/azohra/gopro-yank/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
-    <a href="https://github.com/azohra/gopro-yank/releases"><img alt="Release" src="https://img.shields.io/github/v/release/azohra/gopro-yank?color=brightgreen"></a>
-    <img alt="Pure Go" src="https://img.shields.io/badge/pure_Go-no_runtime-00ADD8">
+    <a href="https://github.com/azohra/gopro-yank/releases"><img alt="Release" src="https://img.shields.io/github/v/release/azohra/gopro-yank?color=58E0B4"></a>
+    <a href="https://github.com/azohra/gopro-yank/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-F4F0E8"></a>
+    <img alt="Pure Go" src="https://img.shields.io/badge/runtime-none-FF5C35">
   </p>
 </div>
 
-GoPro Yank turns a GoPro cloud library into a portable, self-verifying archive.
-It downloads one source ZIP per media item, commits only validated originals,
-and records a SHA-256 for every file. Runs are parallel, interruptible, and
-resumable.
+# GoPro Yank
 
-The archive carries its own source snapshots, canonical manifest, checksum
-file, and offline report. Credentials never enter it.
+GoPro Yank brings every original in your GoPro cloud library into one
+portable, self-verifying archive. It is a single native app: no Python, no
+virtual environment, no account data inside the archive.
 
-## Install
+It does not stop at “download finished.” Every file is validated, hashed, and
+recorded so the media and the proof travel together.
 
-Download the archive for your computer from
-[Releases](https://github.com/azohra/gopro-yank/releases). Each contains one
-native executable and the license; no Python or installer is required.
+![GoPro Yank terminal demo](docs/demo.gif)
 
-| System | Asset |
+## Get GoPro Yank
+
+Download the asset for your computer from
+[Releases](https://github.com/azohra/gopro-yank/releases):
+
+| Computer | Asset |
 |---|---|
-| macOS Apple Silicon | `gopro-yank_darwin_arm64.tar.gz` |
-| macOS Intel | `gopro-yank_darwin_amd64.tar.gz` |
+| Apple Silicon Mac | `gopro-yank_darwin_arm64.tar.gz` |
+| Intel Mac | `gopro-yank_darwin_amd64.tar.gz` |
 | Windows x64 / ARM64 | `gopro-yank_windows_amd64.zip` / `gopro-yank_windows_arm64.zip` |
 | Linux x64 / ARM64 | `gopro-yank_linux_amd64.tar.gz` / `gopro-yank_linux_arm64.tar.gz` |
 
-Verify the asset against `checksums.txt`, put the executable on `PATH`, then
+Check the download against `checksums.txt`, put the executable on `PATH`, and
 run `gopro-yank demo`.
 
-Homebrew builds from the same release source:
+Or build the release source with Homebrew:
 
 ```sh
 brew tap azohra/gopro-yank https://github.com/azohra/gopro-yank
 brew install gopro-yank
 ```
 
-Use `brew install --HEAD gopro-yank` for the current `main` branch.
-
-## Export
+## Bring everything home
 
 ```sh
 gopro-yank login
@@ -50,49 +48,54 @@ gopro-yank pull --out ~/Pictures/GoPro
 gopro-yank verify --out ~/Pictures/GoPro
 ```
 
-`pull` captures the source inventory and full non-secret metadata, checks disk
-space, downloads and extracts atomically, hashes every original, verifies the
-result, and writes the report. Rerunning fetches only missing, failed, or
-damaged items.
+`pull` is the whole job: capture the cloud inventory and non-secret metadata,
+check disk space, ingest in parallel, validate each ZIP, extract atomically,
+hash every original, verify the result, and write the report.
+
+Interrupt it whenever you need to. The next run fetches only missing, failed,
+or damaged items.
+
+## What comes home
 
 ```text
 GoPro/
 ├── originals/2026/07/15/id-<encoded-media-id>/...
 └── .gopro-yank/
-    ├── manifest.json
-    ├── checksums.sha256
-    ├── report.html
-    ├── recovery/
-    ├── snapshots/
-    └── staging/
+    ├── manifest.json        canonical archive record
+    ├── checksums.sha256     standard file checksums
+    ├── report.html          human-readable offline proof
+    ├── snapshots/           source inventories
+    ├── recovery/            prior files retained during repair
+    └── staging/             incomplete work, never committed as done
 ```
 
-Paths are collision-safe across common filesystems, and ZIP members cannot
-escape the archive root. Source secrets and secret-bearing URL parameters are
-redacted before persistence.
+Paths are collision-safe across common filesystems. ZIP members cannot escape
+the archive root. Credentials and secret-bearing source fields are redacted
+before anything is persisted.
 
-## Verify and repair
+## Verify, repair, or copy
 
-The default verification is fully offline and reads every recorded byte:
+Verification is offline by default and reads every recorded byte:
 
 ```sh
 gopro-yank verify --out ~/Pictures/GoPro
 ```
 
-Refresh the cloud inventory first, or verify a transported copy against the
-primary manifest:
+Refresh the source inventory first, or prove that a transported copy matches
+the primary archive:
 
 ```sh
 gopro-yank verify --source --out ~/Pictures/GoPro
 gopro-yank verify --out ~/Pictures/GoPro --replica /Volumes/Archive-2/GoPro
 ```
 
-Cloud deletions never delete local media. If an item is damaged, the next
-`pull` fetches it again and retains the prior directory under `recovery/`.
+Cloud deletions never delete local media. If a file is damaged, the next
+`pull` replaces it only after the new copy verifies and retains the prior
+directory under `recovery/`.
 
 `DOWNLOADABLE MEDIA EXPORT COMPLETE` means every automatically downloadable
-item in the latest snapshot has a local file record and no archive blocker. It
-does not claim equivalence to an unavailable camera-side checksum or assess
+item in the latest snapshot has a local file record and no archive blocker.
+It does not claim equivalence to an unavailable camera-side checksum or assess
 other subscription benefits. `MultiClipEdit` timelines require manual export.
 
 ## Commands
@@ -111,14 +114,14 @@ other subscription benefits. `MultiClipEdit` timelines require manual export.
 
 Run `gopro-yank <command> --help` for options.
 
-## Existing archives
+## From v0 to v1
 
 The first `pull` can adopt Python v0 markers from
-`~/.local/share/gopro-yank/state/`. It hashes unambiguous existing files in
-place and leaves the markers untouched. Missing, unsafe, or multiply claimed
-paths are reported for attention.
+`~/.local/share/gopro-yank/state/`. It hashes unambiguous files in place and
+leaves the old markers untouched. Missing, unsafe, or multiply claimed paths
+are reported for attention.
 
-## Development and releases
+## Build it
 
 ```sh
 make fmt
@@ -128,14 +131,14 @@ make release VERSION=1.0.0
 ```
 
 The pure-Go release build cross-compiles macOS, Windows, and Linux for ARM64
-and AMD64. GitHub checks every branch and pull request, and tagged releases use
-the same local script. The Go v1 port should complete a live-library validation
-before its first release is published.
+and AMD64. GitHub checks branches and pull requests; version tags use the same
+release script.
 
 Use GoPro Yank only with your own account. It relies on undocumented GoPro
-cloud endpoints that may change. No command deletes cloud or archived media.
-macOS notarization and Windows Authenticode signing remain release-identity
-work.
+cloud endpoints that may change. GoPro Yank is an independent open-source
+project and is not affiliated with GoPro, Inc. No command deletes cloud or
+archived media.
 
-Inspired by [itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus).
-Licensed under [MIT](https://github.com/azohra/gopro-yank/blob/main/LICENSE).
+[Brand system](docs/brand.md) ·
+[MIT license](https://github.com/azohra/gopro-yank/blob/main/LICENSE) ·
+Inspired by [itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus)

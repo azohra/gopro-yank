@@ -42,12 +42,12 @@ git -C "$project_root" archive \
   --mtime=1970-01-01T00:00:00Z \
   --prefix=gopro-yank/ \
   --output="$output_dir/gopro-yank_source.tar.gz" \
-  'HEAD^{tree}' -- cmd internal go.mod LICENSE README.md
+  'HEAD^{tree}' -- .env.example .github cmd docs internal scripts go.mod Makefile LICENSE README.md
 source_sha=$(shasum -a 256 "$output_dir/gopro-yank_source.tar.gz" | awk '{print $1}')
 
 cat > "$project_root/Formula/gopro-yank.rb" <<FORMULA
 class GoproYank < Formula
-  desc "Export every GoPro cloud original and verify the archive offline"
+  desc "Bring every GoPro cloud original home in a verified archive"
   homepage "https://github.com/azohra/gopro-yank"
   url "https://github.com/azohra/gopro-yank/releases/download/v${release_version}/gopro-yank_source.tar.gz"
   sha256 "${source_sha}"
