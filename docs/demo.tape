@@ -1,37 +1,26 @@
-# vhs script for the gopro-yank demo GIF.
-#
-# render with:  vhs docs/demo.tape
-# output:       docs/demo.gif
-
-# Filename revision (-rN) busts the GitHub asset cache whenever the recording
-# changes — GitHub's /raw/ redirect strips query strings, so the file path
-# itself has to change. Bump rN and update README on every re-record.
-Output docs/demo-r2.gif
+Output docs/demo.gif
 
 Set Shell zsh
-Set FontSize 14
-Set FontFamily "JetBrains Mono"
-Set Width  1280
-Set Height 380
+Set FontSize 15
+Set FontFamily "Menlo"
+Set Width 1040
+Set Height 540
 Set Padding 24
-Set Theme   "Dracula"
-Set TypingSpeed 30ms
+Set Theme "Catppuccin Mocha"
+Set TypingSpeed 35ms
+Set CursorBlink false
 
 Hide
-Type "PATH=/Users/justin/.local/bin:$PATH"
+Type "export PS1='❯ '"
 Enter
-Sleep 300ms
 Type "clear"
 Enter
 Show
 
-# 1. The pitch: a single, short command.
-Type "gopro-yank demo --count 14 --parallel 6"
-Sleep 800ms
+Type "gopro-yank --version"
 Enter
+Sleep 900ms
 
-# Let the run play out — 14 fake items at 6-way parallelism.
-Sleep 18s
-
-# Hold on the finished screen so the result is readable.
-Sleep 2s
+Type "gopro-yank demo --count 8"
+Enter
+Sleep 4s

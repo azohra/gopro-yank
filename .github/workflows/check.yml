@@ -1,0 +1,32 @@
+name: Check
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: make check
+      - run: ./scripts/build-release.sh dev
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gopro-yank-${{ github.sha }}
+          path: release/
+          retention-days: 7
