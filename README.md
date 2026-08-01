@@ -34,9 +34,12 @@ gopro-yank login
 gopro-yank pull --out ~/Pictures/GoPro
 ```
 
-That is the whole job. GoPro Yank finds your media, checks disk space,
-downloads several originals at once, verifies each one, and writes a readable
-report. Stop whenever you like; run the same command to continue.
+`login` opens a separate browser window on GoPro's website. Sign in normally;
+GoPro Yank never sees your password and closes the window once connected.
+
+That is the whole job. GoPro Yank finds your media, checks disk space, downloads
+several originals at once, verifies each one, and writes a readable report.
+Stop whenever you like; run the same command to continue.
 
 ## What you get
 
@@ -51,9 +54,9 @@ GoPro/
     └── recovery/       prior files kept during repair
 ```
 
-Your login stays on this computer and is never copied into the archive. File
-names are safe across macOS, Windows, and Linux, and ZIP contents cannot escape
-the archive directory.
+Your GoPro login stays on this computer and is never copied into the archive.
+File names are safe across macOS, Windows, and Linux, and ZIP contents cannot
+escape the archive directory.
 
 When GoPro Yank prints `DOWNLOADABLE MEDIA EXPORT COMPLETE`, every original it
 found in the latest library list has downloaded and passed its file checks.

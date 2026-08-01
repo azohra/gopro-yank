@@ -37,7 +37,7 @@ func TestPullBuildsPortableVerifiedArchive(t *testing.T) {
 	t.Setenv("USER_ID", "")
 	root := filepath.Join(t.TempDir(), "GoPro")
 	envPath := filepath.Join(t.TempDir(), ".env")
-	if err := os.WriteFile(envPath, []byte("AUTH_TOKEN=token\nUSER_ID=user\n"), 0o600); err != nil {
+	if err := os.WriteFile(envPath, []byte("AUTH_TOKEN=token\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := pullCommand(context.Background(), []string{"-out", root, "-env-file", envPath, "-state-dir", filepath.Join(t.TempDir(), "none"), "-parallel", "1"}); err != nil {

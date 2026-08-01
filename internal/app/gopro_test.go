@@ -30,7 +30,7 @@ func TestAPIListingRetriesAndFullRecords(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	client := NewGoProClient("token", "user")
+	client := NewGoProClient("token")
 	client.BaseURL = server.URL
 	items, err := client.ListAll(context.Background(), 100)
 	if err != nil {
@@ -52,7 +52,7 @@ func TestSourceZIPErrorDoesNotExposeToken(t *testing.T) {
 	secret := "secret token=="
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(503) }))
 	defer server.Close()
-	client := NewGoProClient(secret, "user")
+	client := NewGoProClient(secret)
 	client.BaseURL = server.URL
 	_, err := client.StreamSourceZIP(context.Background(), "item", &strings.Builder{})
 	if err == nil {
@@ -60,5 +60,23 @@ func TestSourceZIPErrorDoesNotExposeToken(t *testing.T) {
 	}
 	if strings.Contains(safeError(err, secret), secret) || strings.Contains(safeError(err, secret), "secret+token") {
 		t.Fatalf("token leaked: %v", err)
+	}
+}
+
+func TestOnlyAccessTokenIsSent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := r.Cookie("gp_access_token"); err != nil {
+			t.Error("access token cookie missing")
+		}
+		if _, err := r.Cookie("gp_user_id"); err == nil {
+			t.Error("unexpected user ID cookie")
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": "user"})
+	}))
+	defer server.Close()
+	client := NewGoProClient("token")
+	client.BaseURL = server.URL
+	if _, err := client.Validate(context.Background()); err != nil {
+		t.Fatal(err)
 	}
 }

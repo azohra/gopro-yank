@@ -60,7 +60,7 @@ Usage:
   gopro-yank <command> [options]
 
 Commands:
-  login      Save and check your GoPro login cookies
+  login      Connect your GoPro account
   pull       Download and check every original
   verify     Check the archive, your GoPro library, or a copied archive
   list       List archived items
@@ -95,8 +95,8 @@ func loadCredentials(path string) (string, string, error) {
 	if user == "" {
 		user = values["USER_ID"]
 	}
-	if token == "" || user == "" {
-		return "", "", errors.New("missing AUTH_TOKEN and/or USER_ID; run gopro-yank login")
+	if token == "" {
+		return "", "", errors.New("GoPro is not connected; run gopro-yank login")
 	}
 	return token, user, nil
 }
@@ -162,44 +162,61 @@ func captureCredential(reader *bufio.Reader, label string, paste bool) (string, 
 
 func loginCommand(ctx context.Context, args []string) error {
 	flags := flag.NewFlagSet("login", flag.ContinueOnError)
-	envPath := flags.String("env-file", defaultEnvFile(), "credential file")
-	noBrowser := flags.Bool("no-browser", false, "do not open gopro.com")
-	force := flags.Bool("force", false, "overwrite existing credentials")
-	paste := flags.Bool("paste", false, "paste values directly instead of reading the clipboard")
+	envPath := flags.String("env-file", defaultEnvFile(), "login file")
+	noBrowser := flags.Bool("no-browser", false, "paste a login token instead")
+	paste := flags.Bool("paste", false, "paste the login token instead of reading the clipboard")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
-	if _, err := os.Stat(*envPath); err == nil && !*force {
-		return errors.New("credential file exists; pass --force to overwrite it")
+	fmt.Println("GoPro Yank login")
+	var token string
+	var err error
+	if !*noBrowser && !*paste {
+		fmt.Println("\nOpening a separate GoPro sign-in window...\nSign in there. GoPro Yank never sees your password.")
+		token, err = loginInBrowser(ctx)
+		if err != nil {
+			return fmt.Errorf("automatic sign-in failed: %w; use gopro-yank login --no-browser for the manual option", err)
+		}
+	} else {
+		fmt.Println("\nSign in at gopro.com, then copy gp_access_token from the browser's cookies.\nYou may also paste a Cookie header containing it.")
+		if !*noBrowser {
+			_ = openURL(mediaLibraryURL)
+		}
+		reader := bufio.NewReader(os.Stdin)
+		value, captureErr := captureCredential(reader, "gp_access_token", *paste)
+		if captureErr != nil {
+			return captureErr
+		}
+		token = parseCredential(value, "gp_access_token")
+		if token == "" {
+			return errors.New("gp_access_token was not found")
+		}
 	}
-	fmt.Println("GoPro Yank login\n\nSign in at gopro.com, then open browser DevTools → Application → Cookies → https://gopro.com.\nCopy gp_access_token and gp_user_id. Credentials stay outside the archive with owner-only permissions.")
-	if !*noBrowser {
-		_ = openURL(mediaLibraryURL)
-	}
-	reader := bufio.NewReader(os.Stdin)
-	token, err := captureCredential(reader, "gp_access_token", *paste)
-	if err != nil {
-		return err
-	}
-	user, err := captureCredential(reader, "gp_user_id", *paste)
-	if err != nil {
-		return err
-	}
-	client := NewGoProClient(token, user)
-	fmt.Println("Checking your GoPro login...")
-	profile, err := client.Validate(ctx)
+	fmt.Println("Checking the connection...")
+	_, user, err := connectGoPro(ctx, token, "")
 	if err != nil {
 		return err
 	}
 	if err := saveCredentials(*envPath, token, user); err != nil {
 		return err
 	}
-	who := stringValue(profile["email"])
-	if who == "" {
-		who = user
-	}
-	fmt.Printf("Logged in as %s\nSaved to %s\nNext: gopro-yank pull\n", who, *envPath)
+	fmt.Println("Connected to GoPro\nLogin saved on this computer\nNext: gopro-yank pull")
 	return nil
+}
+
+func connectGoPro(ctx context.Context, token, user string) (*GoProClient, string, error) {
+	client := NewGoProClient(token)
+	profile, err := client.Validate(ctx)
+	if err != nil {
+		return nil, "", err
+	}
+	if user == "" {
+		user = profileUserID(profile)
+	}
+	if user == "" {
+		return nil, "", errors.New("GoPro accepted the login but did not identify the account")
+	}
+	return client, user, nil
 }
 
 func captureSource(ctx context.Context, client *GoProClient, archive *Archive, user string, perPage int) ([]MediaItem, error) {
@@ -220,7 +237,7 @@ func captureSource(ctx context.Context, client *GoProClient, archive *Archive, u
 func pullCommand(ctx context.Context, args []string) error {
 	flags := flag.NewFlagSet("pull", flag.ContinueOnError)
 	out := flags.String("out", defaultArchiveRoot(), "archive folder")
-	envPath := flags.String("env-file", defaultEnvFile(), "credential file")
+	envPath := flags.String("env-file", defaultEnvFile(), "login file")
 	state := flags.String("state-dir", defaultLegacyState(), "older Python v0 records folder")
 	parallel := flags.Int("parallel", 8, "number of simultaneous downloads")
 	perPage := flags.Int("per-page", 100, "GoPro results per page")
@@ -253,8 +270,8 @@ func pullCommand(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	client := NewGoProClient(token, user)
-	if _, err := client.Validate(ctx); err != nil {
+	client, user, err := connectGoPro(ctx, token, user)
+	if err != nil {
 		return err
 	}
 	items, err := captureSource(ctx, client, archive, user, *perPage)
@@ -404,7 +421,7 @@ func statusCommand(args []string) error {
 func verifyCommand(ctx context.Context, args []string) error {
 	flags := flag.NewFlagSet("verify", flag.ContinueOnError)
 	out := flags.String("out", defaultArchiveRoot(), "archive root")
-	envPath := flags.String("env-file", defaultEnvFile(), "credential file")
+	envPath := flags.String("env-file", defaultEnvFile(), "login file")
 	source := flags.Bool("source", false, "compare with your current GoPro library")
 	replica := flags.String("replica", "", "copied archive folder")
 	perPage := flags.Int("per-page", 100, "GoPro results per page")
@@ -420,8 +437,8 @@ func verifyCommand(ctx context.Context, args []string) error {
 		if err != nil {
 			return err
 		}
-		client := NewGoProClient(token, user)
-		if _, err := client.Validate(ctx); err != nil {
+		client, user, err := connectGoPro(ctx, token, user)
+		if err != nil {
 			return err
 		}
 		if _, err := captureSource(ctx, client, archive, user, *perPage); err != nil {
@@ -603,7 +620,7 @@ func run(ctx context.Context, args []string, version string) error {
 		if _, _, err := loadCredentials(defaultEnvFile()); err == nil {
 			fmt.Println("GoPro Yank is configured.\nNo default archive exists yet.\nNext: gopro-yank pull")
 		} else {
-			fmt.Println("GoPro Yank is ready.\nNo credentials or default archive exist yet.\nNext: gopro-yank login")
+			fmt.Println("GoPro Yank is ready.\nNo GoPro account is connected and no default archive exists yet.\nNext: gopro-yank login")
 		}
 		return nil
 	}
