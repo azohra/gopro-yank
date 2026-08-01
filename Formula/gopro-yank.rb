@@ -1,8 +1,8 @@
 class GoproYank < Formula
-  desc "Bring every GoPro cloud original home in a verified archive"
+  desc "Download and verify every GoPro cloud original"
   homepage "https://github.com/azohra/gopro-yank"
   url "https://github.com/azohra/gopro-yank/releases/download/v1.0.0/gopro-yank_source.tar.gz"
-  sha256 "6f7bec7f05b510ced7955ed51cb2917b2acd37e96b72d1b2e816046b04d6d4b2"
+  sha256 "0b58640bf691eac7e27780634eb8d89023c3e4d02904e92e3c03a8f2553c859a"
   license "MIT"
   head "https://github.com/azohra/gopro-yank.git", branch: "main"
 

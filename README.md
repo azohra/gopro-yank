@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/hero.svg" width="100%" alt="GoPro Yank — your originals, home and accounted for" />
+  <img src="docs/hero.svg" width="100%" alt="GoPro Yank — every original, downloaded and verified" />
   <p>
     <a href="https://github.com/azohra/gopro-yank/releases"><img alt="Release" src="https://img.shields.io/github/v/release/azohra/gopro-yank?color=58E0B4"></a>
     <a href="https://github.com/azohra/gopro-yank/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-F4F0E8"></a>
@@ -9,12 +9,15 @@
 
 # GoPro Yank
 
-GoPro Yank brings every original in your GoPro cloud library into one
-portable, self-verifying archive. It is a single native app: no Python, no
-virtual environment, no account data inside the archive.
+**Bring your GoPro library home—and know nothing is missing.**
 
-It does not stop at “download finished.” Every file is validated, hashed, and
-recorded so the media and the proof travel together.
+GoPro Yank downloads every original in your GoPro cloud library into one
+portable archive, then verifies every file. It is a single native app: no
+Python, no virtual environment, no account data inside the archive.
+
+It does not stop at “download finished.” GoPro Yank checks that every file
+arrived intact and records the result, so the archive can be checked again
+later—even without a GoPro account or internet connection.
 
 ![GoPro Yank terminal demo](docs/demo.gif)
 
@@ -40,7 +43,7 @@ brew tap azohra/gopro-yank https://github.com/azohra/gopro-yank
 brew install gopro-yank
 ```
 
-## Bring everything home
+## Download your library
 
 ```sh
 gopro-yank login
@@ -48,41 +51,41 @@ gopro-yank pull --out ~/Pictures/GoPro
 gopro-yank verify --out ~/Pictures/GoPro
 ```
 
-`pull` is the whole job: capture the cloud inventory and non-secret metadata,
-check disk space, ingest in parallel, validate each ZIP, extract atomically,
-hash every original, verify the result, and write the report.
+`pull` is the whole job: list your GoPro media, check that there is enough disk
+space, download several originals at once, confirm each one arrived intact,
+and write a report.
 
 Interrupt it whenever you need to. The next run fetches only missing, failed,
 or damaged items.
 
-## What comes home
+## What the archive contains
 
 ```text
 GoPro/
 ├── originals/2026/07/15/id-<encoded-media-id>/...
 └── .gopro-yank/
-    ├── manifest.json        canonical archive record
-    ├── checksums.sha256     standard file checksums
-    ├── report.html          human-readable offline proof
-    ├── snapshots/           source inventories
-    ├── recovery/            prior files retained during repair
-    └── staging/             incomplete work, never committed as done
+    ├── manifest.json        complete archive index
+    ├── checksums.sha256     fingerprints used to check files
+    ├── report.html          readable verification report
+    ├── snapshots/           saved GoPro library lists
+    ├── recovery/            prior files kept during repair
+    └── staging/             unfinished downloads
 ```
 
-Paths are collision-safe across common filesystems. ZIP members cannot escape
-the archive root. Credentials and secret-bearing source fields are redacted
-before anything is persisted.
+File names are made safe for macOS, Windows, and Linux. ZIP contents are blocked
+from writing outside the archive. Login cookies and other secret values are
+removed from saved GoPro records.
 
 ## Verify, repair, or copy
 
-Verification is offline by default and reads every recorded byte:
+Verification works without contacting GoPro and reads every archived file:
 
 ```sh
 gopro-yank verify --out ~/Pictures/GoPro
 ```
 
-Refresh the source inventory first, or prove that a transported copy matches
-the primary archive:
+Compare against your current GoPro library first, or check that a copied
+archive matches the original:
 
 ```sh
 gopro-yank verify --source --out ~/Pictures/GoPro
@@ -93,21 +96,22 @@ Cloud deletions never delete local media. If a file is damaged, the next
 `pull` replaces it only after the new copy verifies and retains the prior
 directory under `recovery/`.
 
-`DOWNLOADABLE MEDIA EXPORT COMPLETE` means every automatically downloadable
-item in the latest snapshot has a local file record and no archive blocker.
-It does not claim equivalence to an unavailable camera-side checksum or assess
-other subscription benefits. `MultiClipEdit` timelines require manual export.
+`DOWNLOADABLE MEDIA EXPORT COMPLETE` means every original GoPro Yank found in
+the latest library list was downloaded and passed its file checks. GoPro does
+not provide the original camera checksums, so the report can verify the files
+from the moment they enter the archive—not their earlier camera history.
+`MultiClipEdit` timelines require manual export.
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `login` | Capture, validate, and protect GoPro cookies |
-| `pull` | Snapshot, plan, ingest, verify, and report |
-| `verify` | Audit locally, reconcile the source, or check a replica |
-| `list` | Inspect the manifest offline |
-| `status` | Show the archive verdict |
-| `manifest` | Print or copy the canonical manifest |
+| `login` | Save and check your GoPro login cookies |
+| `pull` | Download and check every original |
+| `verify` | Check the archive, your GoPro library, or a copied archive |
+| `list` | List archived items |
+| `status` | Show completion and any problems |
+| `manifest` | Print or copy the complete archive index |
 | `report` | Regenerate or open the offline report |
 | `skip` | Classify an item for manual handling |
 | `demo` | Exercise the CLI without credentials |
@@ -116,10 +120,10 @@ Run `gopro-yank <command> --help` for options.
 
 ## From v0 to v1
 
-The first `pull` can adopt Python v0 markers from
-`~/.local/share/gopro-yank/state/`. It hashes unambiguous files in place and
-leaves the old markers untouched. Missing, unsafe, or multiply claimed paths
-are reported for attention.
+The first `pull` can read download records left by Python v0 in
+`~/.local/share/gopro-yank/state/`. It checks existing files where they are and
+leaves the old records untouched. Missing or ambiguous files are clearly
+reported for attention.
 
 ## Build it
 

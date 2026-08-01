@@ -47,7 +47,7 @@ source_sha=$(shasum -a 256 "$output_dir/gopro-yank_source.tar.gz" | awk '{print 
 
 cat > "$project_root/Formula/gopro-yank.rb" <<FORMULA
 class GoproYank < Formula
-  desc "Bring every GoPro cloud original home in a verified archive"
+  desc "Download and verify every GoPro cloud original"
   homepage "https://github.com/azohra/gopro-yank"
   url "https://github.com/azohra/gopro-yank/releases/download/v${release_version}/gopro-yank_source.tar.gz"
   sha256 "${source_sha}"

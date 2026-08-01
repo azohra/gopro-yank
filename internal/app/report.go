@@ -35,14 +35,14 @@ type reportData struct {
 }
 
 const reportTemplate = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GoPro Yank archive report</title><style>
-:root{color-scheme:dark;--bg:#0b1115;--panel:#111c22;--line:#30424b;--text:#f4f0e8;--muted:#8fa7b2;--yank:#ff5c35;--proof:#58e0b4;--amber:#f2bd5b}*{box-sizing:border-box}body{margin:0;font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--text)}main{width:min(1100px,calc(100% - 32px));margin:48px auto 80px}h1{font-size:clamp(2.2rem,7vw,4.8rem);letter-spacing:-.04em;margin:.2rem 0}.muted{color:var(--muted)}.verdict{margin:28px 0;padding:22px;border:1px solid var(--line);border-left:6px solid var(--amber);background:var(--panel);border-radius:10px}.verdict.good{border-left-color:var(--proof)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:24px 0}.metric,.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px}.metric strong{display:block;font-size:1.65rem;color:var(--proof)}.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px;margin:16px 0}table{width:100%;border-collapse:collapse}th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted)}code{color:var(--yank);word-break:break-all}.status{color:var(--amber)}footer{margin-top:32px;color:var(--muted)}</style></head><body><main>
-<div class="muted">GOPRO YANK / VERIFIED ARCHIVE</div><h1>Home + accounted for.</h1><p class="muted">Portable proof generated from <code>.gopro-yank/manifest.json</code>.</p>
-<section class="verdict {{.VerdictClass}}"><strong>{{.Verdict}}</strong><br>Source snapshot: {{.Snapshot}} · Integrity: {{.Integrity}}</section>
-<section class="grid"><div class="metric"><strong>{{.Summary.Archived}}</strong>archived items</div><div class="metric"><strong>{{.Summary.Files}}</strong>original files</div><div class="metric"><strong>{{human .Summary.Bytes}}</strong>preserved</div><div class="metric"><strong>{{.Summary.Manual}}</strong>manual items</div><div class="metric"><strong>{{.Summary.Blockers}}</strong>archive blockers</div><div class="metric"><strong>{{.Summary.ReplacedArtifacts}}</strong>retained repairs</div></section>
+:root{color-scheme:dark;--bg:#0b1115;--panel:#111c22;--line:#30424b;--text:#f4f0e8;--muted:#8fa7b2;--yank:#ff5c35;--verified:#58e0b4;--amber:#f2bd5b}*{box-sizing:border-box}body{margin:0;font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--bg);color:var(--text)}main{width:min(1100px,calc(100% - 32px));margin:48px auto 80px}h1{font-size:clamp(2.2rem,7vw,4.8rem);letter-spacing:-.04em;margin:.2rem 0}.muted{color:var(--muted)}.verdict{margin:28px 0;padding:22px;border:1px solid var(--line);border-left:6px solid var(--amber);background:var(--panel);border-radius:10px}.verdict.good{border-left-color:var(--verified)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:24px 0}.metric,.card{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:18px}.metric strong{display:block;font-size:1.65rem;color:var(--verified)}.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:16px;margin:16px 0}table{width:100%;border-collapse:collapse}th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted)}code{color:var(--yank);word-break:break-all}.status{color:var(--amber)}footer{margin-top:32px;color:var(--muted)}</style></head><body><main>
+<div class="muted">GOPRO YANK / ARCHIVE REPORT</div><h1>Every original. Downloaded and verified.</h1><p class="muted">Generated from <code>.gopro-yank/manifest.json</code>.</p>
+<section class="verdict {{.VerdictClass}}"><strong>{{.Verdict}}</strong><br>GoPro library list: {{.Snapshot}} · File check: {{.Integrity}}</section>
+<section class="grid"><div class="metric"><strong>{{.Summary.Archived}}</strong>archived items</div><div class="metric"><strong>{{.Summary.Files}}</strong>original files</div><div class="metric"><strong>{{human .Summary.Bytes}}</strong>saved</div><div class="metric"><strong>{{.Summary.Manual}}</strong>manual exports</div><div class="metric"><strong>{{.Summary.Blockers}}</strong>need attention</div><div class="metric"><strong>{{.Summary.ReplacedArtifacts}}</strong>prior files kept</div></section>
 <section class="two"><div class="card"><h2>By year</h2><table><tr><th>Year</th><th>Items</th><th>Size</th></tr>{{range .Years}}<tr><td>{{.Name}}</td><td>{{.Items}}</td><td>{{human .Bytes}}</td></tr>{{end}}</table></div><div class="card"><h2>By media type</h2><table><tr><th>Type</th><th>Items</th></tr>{{range .Types}}<tr><td>{{.Name}}</td><td>{{.Items}}</td></tr>{{end}}</table></div></section>
 <section class="card"><h2>Needs attention</h2><table><tr><th>ID</th><th>Name</th><th>Status</th><th>Reason</th></tr>{{range .Attention}}<tr><td><code>{{.ID}}</code></td><td>{{.Filename}}</td><td class="status">{{.Status}}</td><td>{{.Reason}}</td></tr>{{else}}<tr><td colspan="4" class="muted">No archive blockers.</td></tr>{{end}}</table></section>
-<section class="card" style="margin-top:16px"><h2>Integrity</h2><table><tr><th>ID</th><th>Issue</th><th>Path</th><th>Detail</th></tr>{{range .Issues}}<tr><td><code>{{.MediaID}}</code></td><td>{{.Kind}}</td><td>{{.Path}}</td><td>{{.Message}}</td></tr>{{else}}<tr><td colspan="4" class="muted">No recorded integrity issues.</td></tr>{{end}}</table></section>
-<footer>Schema 1. This report proves the recorded media export; it does not evaluate other GoPro subscription benefits.</footer></main></body></html>`
+<section class="card" style="margin-top:16px"><h2>File checks</h2><table><tr><th>ID</th><th>Issue</th><th>Path</th><th>Detail</th></tr>{{range .Issues}}<tr><td><code>{{.MediaID}}</code></td><td>{{.Kind}}</td><td>{{.Path}}</td><td>{{.Message}}</td></tr>{{else}}<tr><td colspan="4" class="muted">No file problems recorded.</td></tr>{{end}}</table></section>
+<footer>Schema 1. This report verifies the recorded media export; it does not evaluate other GoPro subscription benefits.</footer></main></body></html>`
 
 func renderReport(archive *Archive, verification *VerificationResult) (string, error) {
 	archive.mu.RLock()
@@ -104,14 +104,14 @@ func renderReport(archive *Archive, verification *VerificationResult) (string, e
 	if summary.Blockers > 0 {
 		verdict, class = "MEDIA EXPORT NEEDS ATTENTION", "warn"
 	}
-	integrity := "Last recorded state"
+	integrity := "Last recorded check"
 	issues := []IntegrityIssue{}
 	if verification != nil {
 		issues = verification.Issues
 		if verification.OK() {
-			integrity = "Verified"
+			integrity = "Passed"
 		} else {
-			integrity = fmt.Sprintf("%d issue(s)", len(issues))
+			integrity = fmt.Sprintf("%d problem(s)", len(issues))
 			verdict, class = "MEDIA EXPORT NEEDS ATTENTION", "warn"
 		}
 	}

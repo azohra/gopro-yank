@@ -2,22 +2,24 @@
 
 ## Idea
 
-**Home + accounted for.** GoPro Yank does more than move media: it brings every
-original into a durable archive and leaves proof behind.
+**Every original. Downloaded and verified.** GoPro Yank brings an entire cloud
+library into a durable archive, then verifies every downloaded file.
 
-The mark combines three gestures: a pull, a landing, and a closed loop. It is
-not a camera illustration; the product owns the archive outcome.
+The mark is a downward arrow landing in an archive tray. The green dot signals
+a completed check. It avoids a camera illustration and focuses on the result.
 
 ## Voice
 
 - Direct, calm, and conclusive.
-- Say what happened, what was proved, and what needs attention.
-- Prefer `originals`, `archive`, `proof`, and `home`.
+- Say what downloaded, what verified, and what still needs attention.
+- Prefer `originals`, `archive`, `checksum`, and `verified`.
+- Lead with ordinary language; introduce technical terms only when they help
+  someone act or trust the result.
 - Avoid backup anxiety, cloud-bashing, and technical theatre.
 
-Primary line: **Your originals. Home + accounted for.**
+Primary line: **Every original. Downloaded and verified.**
 
-Plain-text line: **Your originals. Home and accounted for.**
+Supporting line: **Bring your GoPro library home—and know nothing is missing.**
 
 ## Palette
 
@@ -26,18 +28,18 @@ Plain-text line: **Your originals. Home and accounted for.**
 | Night | `#0B1115` | Ground |
 | Bone | `#F4F0E8` | Primary type |
 | Yank | `#FF5C35` | Motion and action |
-| Proof | `#58E0B4` | Integrity and completion |
+| Verified | `#58E0B4` | Successful file checks |
 | Cloud | `#8FA7B2` | Supporting type |
 | Rule | `#30424B` | Borders and structure |
 
-Use Yank sparingly. Proof is reserved for verified states; warnings remain
+Use Yank sparingly. Verified is reserved for successful checks; warnings remain
 amber so success never becomes ambiguous.
 
 ## Type and layout
 
-Use a modern monospace for product moments and terminal evidence. Use the
-platform sans-serif for longer prose. Favor generous space, short lines, hard
-alignment, and visible evidence over decoration.
+Use a modern monospace for product moments and terminal output. Use the
+platform sans-serif for longer prose. Favor generous space, short lines, tidy
+alignment, and visible results over decoration.
 
 The square mark must retain clear space equal to the status dot. Do not add a
 camera body, gradients, shadows, or extra colors.

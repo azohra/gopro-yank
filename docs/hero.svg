@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
-  <title id="title">GoPro Yank — your originals, home and accounted for</title>
+  <title id="title">GoPro Yank — every original, downloaded and verified</title>
   <desc id="desc">GoPro cloud originals flow into a verified portable archive</desc>
   <defs>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -22,8 +22,8 @@
   </g>
 
   <text x="260" y="158" fill="#f4f0e8" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="72" font-weight="750" letter-spacing="-4">gopro<tspan fill="#ff5c35">-yank</tspan></text>
-  <text x="264" y="211" fill="#8fa7b2" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="20" letter-spacing="3">YOUR ORIGINALS.</text>
-  <text x="264" y="246" fill="#58e0b4" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="20" font-weight="700" letter-spacing="3">HOME + ACCOUNTED FOR.</text>
+  <text x="264" y="211" fill="#8fa7b2" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="20" letter-spacing="3">EVERY ORIGINAL.</text>
+  <text x="264" y="246" fill="#58e0b4" font-family="ui-monospace,SFMono-Regular,Menlo,monospace" font-size="20" font-weight="700" letter-spacing="2">DOWNLOADED AND VERIFIED.</text>
 
   <g transform="translate(768 74)" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">
     <rect width="360" height="272" rx="18" fill="#0b1115" stroke="#30424b" stroke-width="2"/>
@@ -33,8 +33,8 @@
     <text x="112" y="82" fill="#f4f0e8" font-size="15">all originals</text>
     <text x="24" y="120" fill="#8fa7b2" font-size="15">ARCHIVE</text>
     <text x="112" y="120" fill="#f4f0e8" font-size="15">portable</text>
-    <text x="24" y="158" fill="#8fa7b2" font-size="15">PROOF</text>
-    <text x="112" y="158" fill="#58e0b4" font-size="15">SHA-256 verified</text>
+    <text x="24" y="158" fill="#8fa7b2" font-size="15">VERIFY</text>
+    <text x="112" y="158" fill="#58e0b4" font-size="15">files intact</text>
     <path d="M24 188h312" stroke="#26343b"/>
     <text x="24" y="226" fill="#58e0b4" font-size="15" font-weight="700">✓ EXPORT COMPLETE</text>
     <rect x="24" y="244" width="312" height="5" rx="2.5" fill="#26343b"/>

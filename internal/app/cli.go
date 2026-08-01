@@ -54,21 +54,21 @@ func defaultLegacyState() string {
 const mediaLibraryURL = "https://gopro.com/media-library/"
 
 func usage() {
-	fmt.Print(`gopro-yank — your originals, home and accounted for
+	fmt.Print(`gopro-yank — download and verify every GoPro original
 
 Usage:
   gopro-yank <command> [options]
 
 Commands:
-  login      Capture and validate GoPro credentials
-  pull       Snapshot, plan, download, hash, verify, and report
-  verify     Offline SHA-256 audit; optionally reconcile source or check a replica
-  list       Inspect the portable manifest
-  status     Show the archive verdict
-  manifest   Print or copy the canonical JSON manifest
-  report     Regenerate or open the offline HTML report
-  skip       Classify a source item for manual handling
-  demo       Preview the transfer experience without credentials
+  login      Save and check your GoPro login cookies
+  pull       Download and check every original
+  verify     Check the archive, your GoPro library, or a copied archive
+  list       List archived items
+  status     Show completion and any problems
+  manifest   Print or copy the complete archive index
+  report     Regenerate or open the archive report
+  skip       Mark an item for manual handling
+  demo       Preview GoPro Yank without an account
 
 Run gopro-yank <command> --help for command options.
 `)
@@ -186,7 +186,7 @@ func loginCommand(ctx context.Context, args []string) error {
 		return err
 	}
 	client := NewGoProClient(token, user)
-	fmt.Println("Validating with GoPro...")
+	fmt.Println("Checking your GoPro login...")
 	profile, err := client.Validate(ctx)
 	if err != nil {
 		return err
@@ -203,12 +203,12 @@ func loginCommand(ctx context.Context, args []string) error {
 }
 
 func captureSource(ctx context.Context, client *GoProClient, archive *Archive, user string, perPage int) ([]MediaItem, error) {
-	fmt.Println("Capturing the GoPro cloud inventory...")
+	fmt.Println("Reading your GoPro library...")
 	items, err := client.ListAll(ctx, perPage)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Preserving full source metadata for %d items...\n", len(items))
+	fmt.Printf("Saving details for %d item(s)...\n", len(items))
 	full, err := client.FullRecords(ctx, items, 4)
 	if err != nil {
 		return nil, err
@@ -219,12 +219,12 @@ func captureSource(ctx context.Context, client *GoProClient, archive *Archive, u
 
 func pullCommand(ctx context.Context, args []string) error {
 	flags := flag.NewFlagSet("pull", flag.ContinueOnError)
-	out := flags.String("out", defaultArchiveRoot(), "portable archive root")
+	out := flags.String("out", defaultArchiveRoot(), "archive folder")
 	envPath := flags.String("env-file", defaultEnvFile(), "credential file")
-	state := flags.String("state-dir", defaultLegacyState(), "legacy v0 marker directory")
-	parallel := flags.Int("parallel", 8, "parallel item downloads")
-	perPage := flags.Int("per-page", 100, "items per API page")
-	ignoreSpace := flags.Bool("ignore-space-check", false, "continue if free space is below the conservative plan")
+	state := flags.String("state-dir", defaultLegacyState(), "older Python v0 records folder")
+	parallel := flags.Int("parallel", 8, "number of simultaneous downloads")
+	perPage := flags.Int("per-page", 100, "GoPro results per page")
+	ignoreSpace := flags.Bool("ignore-space-check", false, "continue when the disk-space check fails")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func pullCommand(ctx context.Context, args []string) error {
 				return err
 			}
 			if adopted.AdoptedItems+adopted.AttentionItems+adopted.ManualItems > 0 {
-				fmt.Printf("Adopted %d existing item(s); %d need attention (%s hashed).\n", adopted.AdoptedItems, adopted.AttentionItems, humanBytes(adopted.BytesHashed))
+				fmt.Printf("Found %d existing item(s); %d need attention (%s checked).\n", adopted.AdoptedItems, adopted.AttentionItems, humanBytes(adopted.BytesHashed))
 			}
 		}
 	}
@@ -274,7 +274,7 @@ func pullCommand(ctx context.Context, args []string) error {
 			already++
 		}
 	}
-	fmt.Printf("Cloud: %d item(s) · %d archived · %d to download (%s) · %d manual\n", len(items), already, len(todo), humanBytes(total), manual)
+	fmt.Printf("GoPro: %d item(s) · %d archived · %d to download (%s) · %d need manual export\n", len(items), already, len(todo), humanBytes(total), manual)
 	if free, ok := freeDiskBytes(archive.Root); ok && !*ignoreSpace {
 		overhead := int64(0)
 		sizes := make([]int64, len(todo))
@@ -286,7 +286,7 @@ func pullCommand(ctx context.Context, args []string) error {
 			overhead += sizes[index]
 		}
 		if total+overhead > free {
-			return exitError{1, fmt.Errorf("insufficient free space: %s available; conservative plan requires %s", humanBytes(free), humanBytes(total+overhead))}
+			return exitError{1, fmt.Errorf("not enough free space: %s available; downloads may need up to %s", humanBytes(free), humanBytes(total+overhead))}
 		}
 	}
 	downloadContext, cancelDownloads := context.WithCancel(ctx)
@@ -336,7 +336,7 @@ func pullCommand(ctx context.Context, args []string) error {
 		}
 	}
 	if err := ctx.Err(); err != nil {
-		return exitError{130, fmt.Errorf("interrupted; completed archive records remain resumable: %w", err)}
+		return exitError{130, fmt.Errorf("interrupted; finished files are saved, so run the same command to continue: %w", err)}
 	}
 	if len(todo) > 0 {
 		fmt.Printf("Transferred %s in %s\n", humanBytes(transferred), time.Since(started).Round(time.Second))
@@ -370,12 +370,12 @@ func requireArchive(root string) (*Archive, error) {
 
 func printSummary(archive *Archive, verification *VerificationResult) {
 	summary := archive.Summary()
-	fmt.Printf("Archive: %d item(s), %d file(s), %s preserved, %d manual, %d attention\n", summary.Archived, summary.Files, humanBytes(summary.Bytes), summary.Manual, summary.Blockers)
+	fmt.Printf("Archive: %d item(s), %d file(s), %s saved, %d need manual export, %d need attention\n", summary.Archived, summary.Files, humanBytes(summary.Bytes), summary.Manual, summary.Blockers)
 	if verification != nil {
 		if verification.OK() {
-			fmt.Println("Integrity: verified")
+			fmt.Println("File check: passed")
 		} else {
-			fmt.Printf("Integrity: %d issue(s)\n", len(verification.Issues))
+			fmt.Printf("File check: %d issue(s)\n", len(verification.Issues))
 		}
 	}
 	if summary.Archived == 0 {
@@ -405,9 +405,9 @@ func verifyCommand(ctx context.Context, args []string) error {
 	flags := flag.NewFlagSet("verify", flag.ContinueOnError)
 	out := flags.String("out", defaultArchiveRoot(), "archive root")
 	envPath := flags.String("env-file", defaultEnvFile(), "credential file")
-	source := flags.Bool("source", false, "refresh live source first")
-	replica := flags.String("replica", "", "second archive root")
-	perPage := flags.Int("per-page", 100, "items per API page")
+	source := flags.Bool("source", false, "compare with your current GoPro library")
+	replica := flags.String("replica", "", "copied archive folder")
+	perPage := flags.Int("per-page", 100, "GoPro results per page")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -453,7 +453,7 @@ func listCommand(args []string) error {
 	flags := flag.NewFlagSet("list", flag.ContinueOnError)
 	out := flags.String("out", defaultArchiveRoot(), "archive root")
 	pending := flags.Bool("pending", false, "only items needing attention")
-	done := flags.Bool("done", false, "only verified archived items")
+	done := flags.Bool("done", false, "only successfully checked items")
 	asJSON := flags.Bool("json", false, "JSON lines")
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -545,7 +545,7 @@ func reportCommand(args []string) error {
 func skipCommand(args []string) error {
 	flags := flag.NewFlagSet("skip", flag.ContinueOnError)
 	out := flags.String("out", defaultArchiveRoot(), "archive root")
-	reason := flags.String("reason", "", "classification reason")
+	reason := flags.String("reason", "", "why this item needs manual handling")
 	if err := flags.Parse(args); err != nil {
 		return err
 	}
@@ -579,13 +579,13 @@ func demoCommand(args []string) error {
 	for index := 1; index <= *count; index++ {
 		total += int64(128+index*17) * 1024 * 1024
 	}
-	fmt.Printf("GOPRO YANK / DEMO\nYour originals. Home and accounted for.\n\nsource    %d simulated originals · %s\narchive   portable + resumable\n\n", *count, humanBytes(total))
+	fmt.Printf("GOPRO YANK / DEMO\nEvery original. Downloaded and verified.\n\nsource    %d simulated originals · %s\narchive   portable + resumable\n\n", *count, humanBytes(total))
 	for index := 1; index <= *count; index++ {
 		size := int64(128+index*17) * 1024 * 1024
-		fmt.Printf("✓ %02d/%02d  demo-%03d  %9s  SHA-256\n", index, *count, index, humanBytes(size))
+		fmt.Printf("✓ %02d/%02d  demo-%03d  %9s  verified\n", index, *count, index, humanBytes(size))
 		time.Sleep(90 * time.Millisecond)
 	}
-	fmt.Println("\nproof     manifest · checksums · offline report")
+	fmt.Println("\nrecords   file list · checksums · report")
 	fmt.Println("verdict   DOWNLOADABLE MEDIA EXPORT COMPLETE")
 	return nil
 }
