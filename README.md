@@ -1,142 +1,104 @@
 <div align="center">
-  <img src="docs/hero.svg" width="100%" alt="GoPro Yank — bring your GoPro library home" />
+  <img src="docs/logo.svg" width="112" alt="GoPro Yank" />
+  <h1>GoPro Yank</h1>
+  <p><strong>Bring your GoPro library home.</strong></p>
   <p>
-    <a href="https://github.com/azohra/gopro-yank/releases"><img alt="Release" src="https://img.shields.io/github/v/release/azohra/gopro-yank?color=58E0B4"></a>
-    <a href="https://github.com/azohra/gopro-yank/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-F4F0E8"></a>
-    <img alt="No runtime required" src="https://img.shields.io/badge/runtime-none-FF5C35">
+    <a href="https://gopro-yank.azohra.com">Website</a> ·
+    <a href="https://github.com/azohra/gopro-yank/releases/latest">Download</a> ·
+    <a href="LICENSE">MIT licensed</a>
   </p>
 </div>
 
-# GoPro Yank
+GoPro Yank is a small open-source app for looking through your GoPro cloud
+library, choosing where it should live, and downloading all available
+originals. Every saved file is checked. Nothing is deleted from GoPro.
 
-**Bring your GoPro library home.**
-
-[Website](https://gopro-yank.azohra.com) · [Latest release](https://github.com/azohra/gopro-yank/releases/latest)
-
-GoPro Yank downloads every available original from your GoPro cloud library,
-checks every saved file, and gives you a portable archive you control. It never
-deletes GoPro cloud media.
-
-![GoPro Yank interactive app](docs/demo.gif)
-
-## Get started
+## Get going
 
 ```sh
 brew install --cask azohra/tools/gopro-yank
 gopro-yank
 ```
 
-That opens the interactive app. Connect your GoPro account, look through the
-size and shape of your library, choose a folder, and confirm when you are ready
-to archive it.
+That opens the interactive app. It walks you through connecting GoPro, reviewing
+your library, choosing a folder, and confirming the download.
 
-The library view is read-only. **Nothing downloads until you choose Archive and
-confirm it.**
+Want a harmless tour first? `gopro-yank --demo` uses sample data and no account.
 
-Want to look around first? `gopro-yank --demo` runs the whole experience with
-sample data and no account.
+![GoPro Yank showing the interactive archive flow](docs/demo.gif)
 
-## What happens
+## Look first. Download second.
 
-1. GoPro Yank opens GoPro's website in a separate browser window. You sign in
-   there, so the app never sees your password.
-2. It reads your library and shows what is already archived, which originals
-   can download, and what still needs a manual export.
-3. After you confirm, it checks free space, downloads the available originals,
-   and verifies every saved file.
-4. It leaves a readable offline report beside your archive records.
+1. Sign in on GoPro's website. GoPro Yank never sees your password.
+2. Browse capture dates, media types, total size, what is already archived, and
+   what still needs a manual export.
+3. Choose a folder and confirm the download size.
+4. GoPro Yank downloads the available originals and checks every saved file.
 
-You can stop safely at any time. Finished files stay finished; open GoPro Yank
-again to continue.
+Stop whenever you like. Completed files stay completed, and the next run picks
+up what remains.
 
-## Your archive
-
-By default, GoPro Yank uses `Pictures/GoPro` on macOS and Windows. On Linux it
-uses `GoPro-Archive` in the current folder. You can choose any local folder or
-mounted external drive before archiving.
+## Just a folder
 
 ```text
 GoPro/
-├── originals/          your photos and videos
+├── originals/          photos and videos
 └── .gopro-yank/
-    ├── report.html     a readable result you can keep
-    ├── manifest.json   the archive index
+    ├── report.html     readable offline report
+    ├── manifest.json   archive index
     ├── checksums.sha256
-    ├── snapshots/      dated GoPro library lists
+    ├── snapshots/      dated library lists
     └── recovery/       prior files kept during repair
 ```
 
-Your GoPro login stays on this computer and is never copied into the archive.
-The archive works across macOS, Windows, and Linux.
+Put it on your computer or an external drive. Move it, copy it, or inspect it
+without GoPro Yank. Your login stays on the computer where you connected it.
 
-To remove an archive from your computer, open GoPro Yank and choose **Delete
-local archive**. It requires an explicit `DELETE` confirmation, never touches
-GoPro cloud media, and leaves unrelated files and the archive folder itself in
-place.
+To clear the local archive, choose **Delete local archive** in the app and type
+`DELETE`. GoPro Yank removes only the files it recorded. It leaves cloud media,
+unrelated files, and the archive folder alone.
 
-When GoPro Yank says `DOWNLOADABLE MEDIA EXPORT COMPLETE`, every downloadable
-original in the latest library list is present and has passed its checks. GoPro
-does not provide the camera's original checksums, so GoPro Yank records a
-checksum as each file enters your archive and uses it for every later check.
-GoPro `MultiClipEdit` timelines still require a manual export.
+## What “complete” means
 
-## Command-line use
+`DOWNLOADABLE MEDIA EXPORT COMPLETE` means every downloadable original in the
+latest library list is present and has passed its checks.
 
-The interactive app is the normal way in. These commands expose the same core
-operations without the interface:
+GoPro does not publish the camera's original checksums, so GoPro Yank records a
+SHA-256 checksum when each file enters the archive and uses it for later checks.
+GoPro `MultiClipEdit` timelines still need a manual export and remain clearly
+listed as such.
 
-| Command | What it does |
-|---|---|
-| `gopro-yank library` | Inspect the GoPro library without downloading |
-| `gopro-yank archive` | Archive or resume every available original |
-| `gopro-yank verify` | Check every archived file offline |
-| `gopro-yank login` | Connect without opening the interactive app |
-
-Run `gopro-yank <command> --help` for options. For example:
+## Prefer commands?
 
 ```sh
+gopro-yank library
 gopro-yank archive --out /Volumes/Photos/GoPro
 gopro-yank verify --out /Volumes/Photos/GoPro
-gopro-yank verify --out /Volumes/Photos/GoPro --replica /Volumes/Backup/GoPro
 ```
 
-On a computer without a browser, use `gopro-yank login --no-browser` and follow
-the prompt. Environment-based setups can start from
-[`.env.example`](.env.example).
+Run `gopro-yank <command> --help` for options. On a computer without a browser,
+use `gopro-yank login --no-browser`. Environment-based setups can start from
+[`.env.example`](.env.example). The old `pull` command remains an alias for
+`archive` so existing scripts keep working.
 
-Older commands still work for existing scripts, including `pull` as an alias
-for `archive`.
-
-## Other ways to install
+## No Homebrew?
 
 Download the package for your computer from
-[Releases](https://github.com/azohra/gopro-yank/releases), check it against
-`checksums.txt`, and put `gopro-yank` on your `PATH`.
+[Releases](https://github.com/azohra/gopro-yank/releases) and check it against
+`checksums.txt`. Each package contains one executable and the license; Python
+and Go are not required.
 
-| Computer | Package |
-|---|---|
-| Apple Silicon Mac | `gopro-yank_darwin_arm64.tar.gz` |
-| Intel Mac | `gopro-yank_darwin_amd64.tar.gz` |
-| Windows x64 / ARM64 | `gopro-yank_windows_amd64.zip` / `gopro-yank_windows_arm64.zip` |
-| Linux x64 / ARM64 | `gopro-yank_linux_amd64.tar.gz` / `gopro-yank_linux_arm64.tar.gz` |
+Coming from Python v0? The first archive run can read its records from
+`~/.local/share/gopro-yank/state/`, check the existing files in place, and leave
+the old records untouched.
 
-Each package contains one executable and the license. Python and Go are not
-required.
+---
 
-## Coming from Python v0?
+Made with ♥ by [Justin Watts](https://justin.azohra.com).
 
-Your first archive run can read the old download records in
-`~/.local/share/gopro-yank/state/`. Existing files are checked where they are;
-the old records are left untouched.
+GoPro Yank uses undocumented GoPro cloud endpoints and is intended for your own
+account. It is independent open-source software and is not affiliated with
+GoPro, Inc.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-GoPro Yank uses undocumented GoPro cloud endpoints that may change. Use it only
-with your own account. It is an independent open-source project and is not
-affiliated with GoPro, Inc.
-
-[Brand system](docs/brand.md) ·
-[MIT license](https://github.com/azohra/gopro-yank/blob/main/LICENSE) ·
+[Contributing](CONTRIBUTING.md) · [Brand](docs/brand.md) ·
 Inspired by [itsankoff/gopro-plus](https://github.com/itsankoff/gopro-plus)
