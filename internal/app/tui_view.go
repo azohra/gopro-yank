@@ -59,6 +59,8 @@ func (m tuiModel) render() string {
 		body = m.renderProgress(styles)
 	case screenResult:
 		body = m.renderResult(styles)
+	case screenDeleteConfirm:
+		body = m.renderDeleteConfirm(styles)
 	case screenError:
 		body = m.renderError(styles)
 	}
@@ -74,6 +76,8 @@ func (m tuiModel) render() string {
 		footer = "↑/↓ move   enter choose   q quit"
 	} else if m.screen == screenPath {
 		footer = "enter save folder   esc cancel"
+	} else if m.screen == screenDeleteConfirm && !m.busy {
+		footer = "enter delete local archive   esc cancel"
 	} else if m.busy {
 		footer = "esc / q stop safely"
 	} else {
@@ -238,11 +242,37 @@ func verificationLine(styles tuiStyles, verification VerificationResult) string 
 	return styles.warning.Render(fmt.Sprintf("%s · %d issue(s)", line, len(verification.Issues)))
 }
 
+func (m tuiModel) renderDeleteConfirm(styles tuiStyles) string {
+	plan := m.deletePlan
+	message := strings.Join([]string{
+		styles.section.Render("DELETE LOCAL ARCHIVE?"),
+		"",
+		fmt.Sprintf("Archived originals      %d", plan.Originals),
+		fmt.Sprintf("Recorded files          %d", plan.Files),
+		fmt.Sprintf("Recorded size           %s", humanBytes(plan.Bytes)),
+		fmt.Sprintf("Folder                  %s", plan.Root),
+		"",
+		styles.bad.Render("This permanently deletes the recorded files from this computer."),
+		styles.good.Render("Nothing will be deleted from GoPro."),
+		styles.muted.Render("Unrelated files and the folder itself will stay."),
+		"",
+		m.deleteInput.View(),
+	}, "\n")
+	if m.deleteInput.Err != nil {
+		message += "\n\n" + styles.bad.Render(m.deleteInput.Err.Error())
+	}
+	return message
+}
+
 func (m tuiModel) renderError(styles tuiStyles) string {
 	message := "Something went wrong."
 	if m.err != nil {
 		message = m.err.Error()
 	}
+	note := m.errorNote
+	if note == "" {
+		note = "Nothing was deleted."
+	}
 	return styles.section.Render("NEEDS ATTENTION") + "\n\n" + styles.bad.Render(message) + "\n\n" +
-		styles.muted.Render("Nothing was deleted. Press enter to return home.")
+		styles.muted.Render(note+" Press enter to return home.")
 }

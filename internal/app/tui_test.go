@@ -59,3 +59,65 @@ func TestStoppedArchiveReturnsHomeWithoutClaimingCompletion(t *testing.T) {
 		t.Fatal("stopped archive claimed completion")
 	}
 }
+
+func TestDeleteLocalArchiveRequiresExactConfirmation(t *testing.T) {
+	root := t.TempDir()
+	archive, _ := NewArchive(root)
+	item := testMedia("delete-confirm")
+	if _, err := archive.RecordSnapshot([]MediaItem{item}, "user", nil); err != nil {
+		t.Fatal(err)
+	}
+	addArchived(t, archive, item, "originals/delete-confirm.MP4", []byte("source"))
+
+	model := newTUIModel(context.Background(), "test", false)
+	model.archiveRoot = root
+	model.archive = archive
+	actions := model.homeActions()
+	for index, action := range actions {
+		if action.id == "delete" {
+			model.cursor = index
+			break
+		}
+	}
+	updated, _ := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
+	model = updated.(tuiModel)
+	if model.screen != screenDeleteConfirm {
+		t.Fatalf("delete action did not open confirmation: %v", model.screen)
+	}
+	view := model.View().Content
+	for _, expected := range []string{"DELETE LOCAL ARCHIVE?", "Recorded files", "Nothing will be deleted from GoPro", "folder itself will stay"} {
+		if !strings.Contains(view, expected) {
+			t.Fatalf("delete confirmation does not contain %q:\n%s", expected, view)
+		}
+	}
+
+	model.deleteInput.SetValue("delete")
+	updated, command := model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
+	model = updated.(tuiModel)
+	if command != nil || model.busy || model.deleteInput.Err == nil {
+		t.Fatal("lowercase confirmation started deletion")
+	}
+	if _, err := os.Stat(filepath.Join(root, "originals", "delete-confirm.MP4")); err != nil {
+		t.Fatalf("failed confirmation deleted media: %v", err)
+	}
+
+	model.deleteInput.SetValue("DELETE")
+	updated, command = model.Update(tea.KeyPressMsg(tea.Key{Code: tea.KeyEnter}))
+	model = updated.(tuiModel)
+	if command == nil || !model.busy {
+		t.Fatal("exact confirmation did not start deletion")
+	}
+}
+
+func TestDemoNeverLoadsARealArchive(t *testing.T) {
+	model := newTUIModel(context.Background(), "test", true)
+	model.archiveRoot = t.TempDir()
+	archive, _ := NewArchive(model.archiveRoot)
+	if err := archive.Save(); err != nil {
+		t.Fatal(err)
+	}
+	model.reloadArchive()
+	if model.archive.Exists {
+		t.Fatal("demo loaded a real archive")
+	}
+}

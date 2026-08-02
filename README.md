@@ -11,6 +11,8 @@
 
 **Bring your GoPro library home—and know nothing is missing.**
 
+[Website](https://gopro-yank.azohra.com) · [Latest release](https://github.com/azohra/gopro-yank/releases/latest)
+
 GoPro Yank downloads every original available in your GoPro cloud library,
 checks every saved file, and gives you a portable archive you control. It does
 not delete anything from GoPro.
@@ -65,6 +67,11 @@ GoPro/
 
 Your GoPro login stays on this computer and is never copied into the archive.
 The archive works across macOS, Windows, and Linux.
+
+To remove an archive from your computer, open GoPro Yank and choose **Delete
+local archive**. It requires an explicit `DELETE` confirmation, never touches
+GoPro cloud media, and leaves unrelated files and the archive folder itself in
+place.
 
 When GoPro Yank says `DOWNLOADABLE MEDIA EXPORT COMPLETE`, every downloadable
 original in the latest library list is present and has passed its checks. GoPro
@@ -122,7 +129,7 @@ the old records are left untouched.
 ```sh
 make check
 make build
-make release VERSION=1.2.0
+make release VERSION=1.3.0
 ```
 
 One machine can build the six release packages for macOS, Windows, and Linux.
