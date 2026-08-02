@@ -2,7 +2,9 @@ package app
 
 import (
 	"compress/gzip"
+	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -93,6 +95,20 @@ func TestVerifyPersistsCorruptionState(t *testing.T) {
 	}
 	if !archive.NeedsDownload(item) || archive.Summary().Blockers != 1 {
 		t.Fatal("corruption was not made repairable")
+	}
+}
+
+func TestVerifyCanBeStopped(t *testing.T) {
+	archive, _ := NewArchive(t.TempDir())
+	item := testMedia("cancel")
+	if _, err := archive.RecordSnapshot([]MediaItem{item}, "user", nil); err != nil {
+		t.Fatal(err)
+	}
+	addArchived(t, archive, item, "originals/cancel.MP4", []byte("source"))
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := archive.VerifyContext(ctx, ""); !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected cancellation, got %v", err)
 	}
 }
 
