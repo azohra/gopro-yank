@@ -70,7 +70,7 @@ cask "gopro-yank" do
   url "https://github.com/azohra/gopro-yank/releases/download/v#{version}/gopro-yank_#{os}_#{arch}.tar.gz"
   name "GoPro Yank"
   desc "Download and verify available GoPro cloud originals"
-  homepage "https://gopro-yank.azohra.com"
+  homepage "https://gopro-yank.azohra.com/"
 
   binary "gopro-yank"
 end
