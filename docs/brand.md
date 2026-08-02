@@ -2,8 +2,8 @@
 
 ## Idea
 
-**Every original. Downloaded and verified.** GoPro Yank brings an entire cloud
-library into a durable archive, then verifies every downloaded file.
+**Bring your GoPro library home.** GoPro Yank downloads every available
+original into a durable archive, then checks every saved file.
 
 The mark is a downward arrow landing in an archive tray. The green dot signals
 a completed check. It avoids a camera illustration and focuses on the result.
@@ -15,11 +15,13 @@ a completed check. It avoids a camera illustration and focuses on the result.
 - Prefer `originals`, `archive`, `checksum`, and `verified`.
 - Lead with ordinary language; introduce technical terms only when they help
   someone act or trust the result.
+- Say `available` or `downloadable` when describing source media. Do not imply
+  that GoPro makes every cloud item downloadable.
 - Avoid backup anxiety, cloud-bashing, and technical theatre.
 
-Primary line: **Every original. Downloaded and verified.**
+Primary line: **Bring your GoPro library home.**
 
-Supporting line: **Bring your GoPro library home—and know nothing is missing.**
+Supporting line: **Download every available original. Verify every saved file.**
 
 ## Palette
 
@@ -42,4 +44,4 @@ platform sans-serif for longer prose. Favor generous space, short lines, tidy
 alignment, and visible results over decoration.
 
 The square mark must retain clear space equal to the status dot. Do not add a
-camera body, gradients, shadows, or extra colors.
+camera body or extra colors. Keep gradients and shadows quiet and structural.

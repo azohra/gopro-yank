@@ -44,7 +44,7 @@ func (m tuiModel) render() string {
 	}
 	contentWidth := max(42, min(86, width-6))
 	header := styles.title.Render("↓  GOPRO YANK") + styles.muted.Render("  v"+m.version) + "\n" +
-		styles.tagline.Render("Bring your GoPro library home—and know nothing is missing.")
+		styles.tagline.Render("Bring your GoPro library home.")
 	body := ""
 	switch m.screen {
 	case screenHome:
