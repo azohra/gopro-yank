@@ -2,7 +2,7 @@
 set -eu
 
 release_version=${1:-dev}
-project_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+project_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 output_dir="$project_root/release"
 build_dir=$(mktemp -d "${TMPDIR:-/tmp}/gopro-yank-release.XXXXXX")
 trap 'rm -rf "$build_dir"' EXIT HUP INT TERM
@@ -42,7 +42,7 @@ git -C "$project_root" archive \
   --mtime=1970-01-01T00:00:00Z \
   --prefix=gopro-yank/ \
   --output="$output_dir/gopro-yank_source.tar.gz" \
-  'HEAD^{tree}' -- .env.example .github cmd docs internal scripts go.mod go.sum Makefile LICENSE README.md
+  'HEAD^{tree}' -- .env.example .github cmd docs internal scripts site CONTRIBUTING.md go.mod go.sum Makefile LICENSE README.md
 
 darwin_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_amd64.tar.gz" | awk '{print $1}')
 darwin_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_arm64.tar.gz" | awk '{print $1}')
@@ -69,8 +69,8 @@ cask "gopro-yank" do
 
   url "https://github.com/azohra/gopro-yank/releases/download/v#{version}/gopro-yank_#{os}_#{arch}.tar.gz"
   name "GoPro Yank"
-  desc "Download and verify every GoPro cloud original"
-  homepage "https://github.com/azohra/gopro-yank"
+  desc "Download and verify available GoPro cloud originals"
+  homepage "https://gopro-yank.azohra.com"
 
   binary "gopro-yank"
 end
