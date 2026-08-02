@@ -131,9 +131,7 @@ the old records are left untouched.
 
 ## Contributing
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md). `make check` checks formatting,
-runs vet, and runs race-enabled tests. One machine can build all six release
-packages.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 GoPro Yank uses undocumented GoPro cloud endpoints that may change. Use it only
 with your own account. It is an independent open-source project and is not
