@@ -25,7 +25,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 			t.Fatalf("site is missing %q", expected)
 		}
 	}
-	localReference := regexp.MustCompile(`(?:href|src)="(/[^"#]*)"`)
+	localReference := regexp.MustCompile(`(?:href|src)="(/[^"#?]*)(?:[?#][^"]*)?"`)
 	for _, match := range localReference.FindAllStringSubmatch(html, -1) {
 		if match[1] == "/" {
 			continue
