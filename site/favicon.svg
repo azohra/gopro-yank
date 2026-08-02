@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">GoPro Yank archive mark</title>
+  <desc id="desc">A downward pull arrow landing in an archive tray</desc>
+  <rect x="8" y="8" width="224" height="224" rx="54" fill="#0b1115"/>
+  <path d="M62 58l58 52 58-52" fill="none" stroke="#f4f0e8" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M120 108v50m-24-22 24 24 24-24" fill="none" stroke="#ff5c35" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M55 132v46c0 10 8 18 18 18h94c10 0 18-8 18-18v-46" fill="none" stroke="#58e0b4" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="186" cy="55" r="8" fill="#58e0b4"/>
+</svg>
