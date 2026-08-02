@@ -25,6 +25,7 @@ const (
 	screenPath
 	screenProgress
 	screenResult
+	screenDeleteConfirm
 	screenError
 )
 
@@ -40,6 +41,10 @@ type inspectionFinishedMsg struct {
 }
 type verificationFinishedMsg struct {
 	result VerifyResult
+	err    error
+}
+type deletionFinishedMsg struct {
+	result DeleteResult
 	err    error
 }
 type openFinishedMsg struct{ err error }
@@ -71,11 +76,14 @@ type tuiModel struct {
 	spinner     spinner.Model
 	progress    progress.Model
 	pathInput   textinput.Model
+	deleteInput textinput.Model
 	cancel      context.CancelFunc
 	events      <-chan archiveMessage
 	archiveRun  ArchiveResult
 	verifyRun   VerifyResult
 	recent      []DownloadResult
+	deletePlan  DeletePlan
+	errorNote   string
 }
 
 func newTUIModel(ctx context.Context, version string, demo bool) tuiModel {
@@ -90,6 +98,9 @@ func newTUIModel(ctx context.Context, version string, demo bool) tuiModel {
 	input.CharLimit = 1024
 	input.SetValue(defaultArchiveRoot())
 	input.CursorEnd()
+	deleteInput := textinput.New()
+	deleteInput.Prompt = "Type DELETE  "
+	deleteInput.CharLimit = len("DELETE")
 	archive, _ := NewArchive(defaultArchiveRoot())
 	model := tuiModel{
 		ctx:         ctx,
@@ -102,6 +113,7 @@ func newTUIModel(ctx context.Context, version string, demo bool) tuiModel {
 		spinner:     spin,
 		progress:    bar,
 		pathInput:   input,
+		deleteInput: deleteInput,
 	}
 	if _, _, err := loadCredentials(model.envPath); err == nil {
 		model.connected = true
@@ -148,12 +160,17 @@ func (m tuiModel) homeActions() []tuiAction {
 		if _, err := os.Stat(m.archive.ReportPath); err == nil {
 			actions = append(actions, tuiAction{"report", "Open report", "View the archive report in your browser"})
 		}
+		actions = append(actions, tuiAction{"delete", "Delete local archive", "Remove its saved files from this computer"})
 	}
 	actions = append(actions, tuiAction{"quit", "Quit", "Leave everything as it is"})
 	return actions
 }
 
 func (m *tuiModel) reloadArchive() {
+	if m.demo {
+		m.archive = &Archive{Root: m.archiveRoot}
+		return
+	}
 	archive, err := NewArchive(m.archiveRoot)
 	if err == nil {
 		m.archive = archive
@@ -167,6 +184,7 @@ func (m *tuiModel) startTask(label string) context.Context {
 	m.busyText = label
 	m.status = ""
 	m.err = nil
+	m.errorNote = ""
 	return ctx
 }
 
@@ -185,6 +203,13 @@ func verifyCmd(ctx context.Context, root string) tea.Cmd {
 	return func() tea.Msg {
 		result, err := VerifyArchive(ctx, root, "")
 		return verificationFinishedMsg{result: result, err: err}
+	}
+}
+
+func deleteCmd(ctx context.Context, root string) tea.Cmd {
+	return func() tea.Msg {
+		result, err := DeleteLocalArchive(ctx, root)
+		return deletionFinishedMsg{result: result, err: err}
 	}
 }
 
@@ -275,6 +300,7 @@ func (m tuiModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.BackgroundColorMsg:
 		m.dark = msg.IsDark()
 		m.pathInput.SetStyles(textinput.DefaultStyles(m.dark))
+		m.deleteInput.SetStyles(textinput.DefaultStyles(m.dark))
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.progress.SetWidth(max(20, min(72, msg.Width-12)))
@@ -325,6 +351,17 @@ func (m tuiModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			m.screen = screenResult
 			m.status = "Archive check complete"
 			m.reloadArchive()
+		}
+	case deletionFinishedMsg:
+		m.busy, m.cancel = false, nil
+		if msg.err != nil {
+			m.err, m.screen = msg.err, screenError
+			m.errorNote = "Deletion did not finish. Some local files may already be gone. GoPro cloud media was not touched."
+		} else {
+			m.reloadArchive()
+			m.inspection = nil
+			m.screen, m.cursor = screenHome, 0
+			m.status = fmt.Sprintf("Deleted %d local file(s) · %s. GoPro cloud media was not touched.", msg.result.RemovedFiles, humanBytes(msg.result.RemovedBytes))
 		}
 	case openFinishedMsg:
 		m.busy = false
@@ -404,6 +441,26 @@ func (m tuiModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.pathInput, command = m.pathInput.Update(message)
 		return m, command
 	}
+	if m.screen == screenDeleteConfirm && !m.busy {
+		switch stroke {
+		case "esc":
+			m.deleteInput.Blur()
+			m.deleteInput.Err = nil
+			m.screen = screenHome
+			return m, nil
+		case "enter":
+			if m.deleteInput.Value() != "DELETE" {
+				m.deleteInput.Err = errors.New("type DELETE exactly to continue")
+				return m, nil
+			}
+			m.deleteInput.Blur()
+			ctx := m.startTask("Deleting the local archive — GoPro cloud untouched")
+			return m, deleteCmd(ctx, m.archiveRoot)
+		}
+		var command tea.Cmd
+		m.deleteInput, command = m.deleteInput.Update(message)
+		return m, command
+	}
 	if stroke == "ctrl+c" || stroke == "q" {
 		if m.busy {
 			m.stopTask()
@@ -441,6 +498,17 @@ func (m tuiModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			case "report":
 				m.busy, m.busyText = true, "Opening your archive report"
 				commands = append(commands, openCmd(m.archive.ReportPath))
+			case "delete":
+				plan, err := PlanLocalArchive(m.archiveRoot)
+				if err != nil {
+					m.err, m.screen = err, screenError
+					break
+				}
+				m.deletePlan = plan
+				m.deleteInput.SetValue("")
+				m.deleteInput.Err = nil
+				m.deleteInput.Focus()
+				m.screen = screenDeleteConfirm
 			case "quit":
 				commands = append(commands, tea.Quit)
 			}
@@ -494,7 +562,7 @@ func (m tuiModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case screenError:
 		if stroke == "enter" || stroke == "esc" || stroke == "b" {
-			m.err, m.screen, m.cursor = nil, screenHome, 0
+			m.err, m.errorNote, m.screen, m.cursor = nil, "", screenHome, 0
 		}
 	}
 	return m, tea.Batch(commands...)

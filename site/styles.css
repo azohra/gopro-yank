@@ -1,0 +1,141 @@
+:root {
+  color-scheme: dark;
+  --night: #0b1115;
+  --raised: #111c22;
+  --bone: #f4f0e8;
+  --yank: #ff5c35;
+  --verified: #58e0b4;
+  --cloud: #8fa7b2;
+  --rule: #30424b;
+  --max: 1180px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--night);
+  color: var(--bone);
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; }
+code, .wordmark, .eyebrow, .step-number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.shell { width: min(calc(100% - 40px), var(--max)); margin-inline: auto; }
+.skip { position: fixed; left: 16px; top: -80px; z-index: 20; padding: 10px 14px; background: var(--bone); color: var(--night); }
+.skip:focus { top: 16px; }
+
+.nav { min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.wordmark { display: flex; align-items: center; gap: 12px; text-decoration: none; font-size: 18px; font-weight: 800; letter-spacing: -.04em; }
+.wordmark span span { color: var(--yank); }
+.nav nav { display: flex; align-items: center; gap: 28px; }
+.nav nav a { color: var(--cloud); text-decoration: none; font-size: 14px; font-weight: 700; }
+.nav nav a:hover, .nav nav a:focus-visible { color: var(--bone); }
+.nav .nav-github { color: var(--bone); }
+
+.hero { padding: 90px 0 130px; display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: clamp(50px, 7vw, 100px); }
+.eyebrow { margin: 0 0 18px; color: var(--cloud); font-size: 12px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.eyebrow span { display: inline-block; width: 7px; height: 7px; margin-right: 9px; border-radius: 50%; background: var(--verified); box-shadow: 0 0 0 5px rgb(88 224 180 / 9%); }
+h1, h2, h3 { margin-top: 0; line-height: 1.04; letter-spacing: -.045em; }
+h1 { max-width: 720px; margin-bottom: 28px; font-size: clamp(54px, 7vw, 92px); }
+h2 { margin-bottom: 22px; font-size: clamp(38px, 5vw, 62px); }
+h3 { margin-bottom: 14px; font-size: 23px; }
+.lede { max-width: 620px; margin: 0 0 34px; color: #c7d1d5; font-size: clamp(19px, 2vw, 23px); line-height: 1.5; }
+.install { display: flex; align-items: center; gap: 12px; max-width: 600px; min-height: 58px; padding: 10px 12px 10px 18px; border: 1px solid var(--rule); background: #071014; box-shadow: 0 18px 60px rgb(0 0 0 / 25%); }
+.install > span { color: var(--verified); }
+.install code { min-width: 0; overflow-x: auto; color: var(--bone); font-size: 13px; white-space: nowrap; }
+.install button { margin-left: auto; padding: 8px 11px; border: 1px solid var(--rule); border-radius: 3px; background: var(--raised); color: var(--cloud); cursor: pointer; font: 700 12px/1 ui-monospace, monospace; }
+.install button:hover, .install button:focus-visible { border-color: var(--yank); color: var(--bone); }
+.after-install { margin: 12px 0 30px; color: var(--cloud); font-size: 14px; }
+.after-install code { color: var(--bone); }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; padding: 10px 18px; border: 1px solid var(--rule); text-decoration: none; font-size: 14px; font-weight: 800; }
+.button.primary { border-color: var(--yank); background: var(--yank); color: #17100d; }
+.button.primary:hover, .button.primary:focus-visible { background: #ff7352; }
+.button.secondary:hover, .button.secondary:focus-visible { border-color: var(--cloud); background: var(--raised); }
+
+.demo-frame { margin: 0; overflow: hidden; border: 1px solid var(--rule); border-radius: 18px; background: #070c0f; box-shadow: 0 40px 100px rgb(0 0 0 / 42%); transform: rotate(1deg); }
+.window-bar { height: 43px; display: flex; align-items: center; gap: 7px; padding: 0 16px; border-bottom: 1px solid var(--rule); background: var(--raised); }
+.window-bar span { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); }
+.window-bar span:first-child { background: var(--yank); }
+.window-bar span:last-of-type { background: var(--verified); }
+.window-bar em { margin-left: auto; color: var(--cloud); font: normal 11px/1 ui-monospace, monospace; }
+.demo-frame img { display: block; width: 100%; height: auto; }
+.demo-frame figcaption { padding: 11px 16px 13px; border-top: 1px solid var(--rule); color: var(--cloud); font-size: 12px; }
+.demo-frame figcaption code { color: var(--bone); }
+
+.promises { border-block: 1px solid var(--rule); background: #0e171c; }
+.promise-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.promise-grid article { padding: 32px clamp(18px, 3vw, 42px); border-left: 1px solid var(--rule); }
+.promise-grid article:first-child { border-left: 0; }
+.promise-grid strong, .promise-grid span { display: block; }
+.promise-grid strong { margin-bottom: 5px; font-size: 15px; }
+.promise-grid span { color: var(--cloud); font-size: 14px; }
+
+.section { padding-block: 130px; }
+.section-heading { max-width: 820px; margin-bottom: 64px; }
+.section-heading > p:last-child { max-width: 620px; color: var(--cloud); font-size: 20px; }
+.section-heading.compact { margin-bottom: 36px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--rule); background: var(--rule); }
+.steps article { min-height: 310px; padding: 34px; background: var(--night); }
+.step-number { display: block; margin-bottom: 74px; color: var(--yank); font-size: 13px; font-weight: 800; }
+.steps p { margin: 0; color: var(--cloud); }
+
+.control-section { padding-block: 110px; background: var(--bone); color: var(--night); }
+.control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(50px, 10vw, 140px); align-items: start; }
+.control-section .eyebrow { color: #596b73; }
+.control-copy { border-top: 4px solid var(--yank); padding-top: 25px; }
+.control-copy p { margin: 0 0 22px; font-size: 19px; }
+
+.faq { border-top: 1px solid var(--rule); }
+.faq details { border-bottom: 1px solid var(--rule); }
+.faq summary { position: relative; padding: 27px 48px 27px 0; cursor: pointer; list-style: none; font-size: 20px; font-weight: 750; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 8px; color: var(--yank); font: 400 26px/1 ui-monospace, monospace; }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { max-width: 750px; margin: -7px 0 27px; color: var(--cloud); }
+
+.closing { padding: 50px 0 130px; text-align: center; }
+.closing img { margin-bottom: 28px; }
+.closing h2 { max-width: 850px; margin-inline: auto; }
+.closing .button { margin-top: 18px; }
+
+footer { min-height: 110px; display: flex; align-items: center; justify-content: space-between; gap: 28px; border-top: 1px solid var(--rule); color: var(--cloud); font-size: 13px; }
+footer div { display: flex; gap: 22px; }
+footer a { text-decoration: none; }
+footer a:hover, footer a:focus-visible { color: var(--bone); }
+
+@media (max-width: 920px) {
+  .hero { grid-template-columns: 1fr; padding-top: 50px; }
+  .hero-copy { max-width: 720px; }
+  .demo-frame { max-width: 760px; transform: none; }
+  .steps { grid-template-columns: 1fr; }
+  .steps article { min-height: auto; }
+  .step-number { margin-bottom: 42px; }
+}
+
+@media (max-width: 680px) {
+  .shell { width: min(calc(100% - 28px), var(--max)); }
+  .nav { min-height: 74px; }
+  .nav nav a:not(.nav-github) { display: none; }
+  .hero { padding: 44px 0 80px; gap: 55px; }
+  h1 { font-size: clamp(48px, 15vw, 68px); }
+  .install { align-items: flex-start; flex-wrap: wrap; }
+  .install code { order: 3; width: 100%; padding-bottom: 3px; }
+  .install button { margin-left: auto; }
+  .promise-grid, .control-grid { grid-template-columns: 1fr; }
+  .promise-grid article { border-left: 0; border-top: 1px solid var(--rule); }
+  .promise-grid article:first-child { border-top: 0; }
+  .section { padding-block: 90px; }
+  .control-section { padding-block: 80px; }
+  footer { padding-block: 30px; align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
