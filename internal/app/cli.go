@@ -57,10 +57,10 @@ func usage() {
 Usage:
   gopro-yank                    Open the interactive app
   gopro-yank library [options]  Inspect your library without downloading
-  gopro-yank archive [options]  Archive or resume every original
+  gopro-yank archive [options]  Archive or resume available originals
   gopro-yank verify [options]   Check every archived file
 
-Headless setup:
+Account:
   gopro-yank login [options]    Connect without the interactive app
 
 Run gopro-yank <command> --help for command options.
