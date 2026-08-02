@@ -2,6 +2,7 @@ package app
 
 import (
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -269,14 +270,37 @@ func secureJoin(root, relative string) (string, error) {
 }
 
 func sha256File(path string) (string, int64, error) {
+	return sha256FileContext(context.Background(), path)
+}
+
+func sha256FileContext(ctx context.Context, path string) (string, int64, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return "", 0, err
 	}
 	defer file.Close()
+
 	hash := sha256.New()
-	size, err := io.Copy(hash, file)
-	return hex.EncodeToString(hash.Sum(nil)), size, err
+	buffer := make([]byte, 4*1024*1024)
+	var size int64
+	for {
+		if err := ctx.Err(); err != nil {
+			return "", size, err
+		}
+		read, readErr := file.Read(buffer)
+		if read > 0 {
+			if _, err := hash.Write(buffer[:read]); err != nil {
+				return "", size, err
+			}
+			size += int64(read)
+		}
+		if errors.Is(readErr, io.EOF) {
+			return hex.EncodeToString(hash.Sum(nil)), size, nil
+		}
+		if readErr != nil {
+			return "", size, readErr
+		}
+	}
 }
 
 func boolPointer(value bool) *bool { return &value }
@@ -490,7 +514,7 @@ func (a *Archive) MarkManual(id, reason string) error {
 	return a.saveLocked()
 }
 
-func (a *Archive) Verify(root string) VerificationResult {
+func (a *Archive) VerifyContext(ctx context.Context, root string) (VerificationResult, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	if root == "" {
@@ -503,6 +527,9 @@ func (a *Archive) Verify(root string) VerificationResult {
 	}
 	sort.Strings(ids)
 	for _, id := range ids {
+		if err := ctx.Err(); err != nil {
+			return result, err
+		}
 		record := a.Data.Items[id]
 		if record.Status != "archived" {
 			continue
@@ -513,6 +540,9 @@ func (a *Archive) Verify(root string) VerificationResult {
 			continue
 		}
 		for _, saved := range record.Files {
+			if err := ctx.Err(); err != nil {
+				return result, err
+			}
 			result.CheckedFiles++
 			path, err := secureJoin(root, saved.Path)
 			if err != nil {
@@ -533,7 +563,10 @@ func (a *Archive) Verify(root string) VerificationResult {
 				result.Issues = append(result.Issues, IntegrityIssue{MediaID: id, Kind: "size", Message: fmt.Sprintf("expected %d bytes, found %d", saved.Size, info.Size()), Path: saved.Path})
 				continue
 			}
-			digest, _, err := sha256File(path)
+			digest, _, err := sha256FileContext(ctx, path)
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return result, err
+			}
 			if err != nil {
 				result.Issues = append(result.Issues, IntegrityIssue{MediaID: id, Kind: "read", Message: err.Error(), Path: saved.Path})
 			} else if digest != saved.SHA256 {
@@ -541,6 +574,11 @@ func (a *Archive) Verify(root string) VerificationResult {
 			}
 		}
 	}
+	return result, nil
+}
+
+func (a *Archive) Verify(root string) VerificationResult {
+	result, _ := a.VerifyContext(context.Background(), root)
 	return result
 }
 
