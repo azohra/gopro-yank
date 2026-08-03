@@ -17,10 +17,13 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 	html := string(payload)
 	for _, expected := range []string{
 		"Bring your <em>GoPro library</em> home.",
-		"first library view remains read-only until you confirm",
-		"never changes or deletes media from GoPro",
-		"MultiClipEdit timelines remain clearly listed for manual export",
+		"The app stays read-only until you choose a destination and confirm the download.",
+		"It never changes or deletes it.",
+		"they remain listed for manual export",
 		"brew install --cask azohra/tools/gopro-yank",
+		"releases/latest/download/gopro-yank_darwin_arm64.tar.gz",
+		"releases/latest/download/gopro-yank_windows_amd64.zip",
+		"releases/latest/download/gopro-yank_linux_amd64.tar.gz",
 	} {
 		if !strings.Contains(html, expected) {
 			t.Fatalf("site is missing %q", expected)
@@ -32,7 +35,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(pagePayload), "styles.css?v=purpose-pass") {
+		if !strings.Contains(string(pagePayload), "styles.css?v=direct-downloads") {
 			t.Errorf("%s does not use the current stylesheet cache key", page)
 		}
 		for _, match := range localReference.FindAllStringSubmatch(string(pagePayload), -1) {
@@ -45,7 +48,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		}
 	}
 	for _, expected := range []string{
-		`styles.css?v=purpose-pass`,
+		`styles.css?v=direct-downloads`,
 		`og:image:width" content="1200"`,
 		`og:image:height" content="630"`,
 		`og:image:alt`,
