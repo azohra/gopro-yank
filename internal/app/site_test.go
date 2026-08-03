@@ -36,7 +36,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(pagePayload), "styles.css?v=show-the-product") {
+		if !strings.Contains(string(pagePayload), "styles-v17.css") {
 			t.Errorf("%s does not use the current stylesheet cache key", page)
 		}
 		for _, match := range localReference.FindAllStringSubmatch(string(pagePayload), -1) {
@@ -49,7 +49,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		}
 	}
 	for _, expected := range []string{
-		`styles.css?v=show-the-product`,
+		`styles-v17.css`,
 		`og:image:width" content="1200"`,
 		`og:image:height" content="630"`,
 		`og:image:alt`,
