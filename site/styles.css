@@ -41,7 +41,7 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
 }
 
 code, pre, .wordmark, .eyebrow, .source-label, .step-head, .state-kicker,
-.receipt-head, .receipt-foot, .install-label, .boundary-mark {
+.receipt-head, .receipt-foot, .install-label {
   font-family: var(--mono);
 }
 
@@ -261,22 +261,7 @@ h3 { margin-bottom: 12px; font-size: 24px; }
 }
 .route-caption { margin: 20px 0 0; color: var(--muted); font: 700 10px/1 var(--mono); text-align: right; text-transform: uppercase; }
 
-.trust-band { border-block: 1px solid var(--rule); background: #ebe6dc; }
-.trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
-.trust-grid article {
-  min-height: 124px;
-  padding: 26px clamp(18px, 3vw, 36px);
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  border-left: 1px solid var(--rule);
-}
-.trust-grid article:first-child { border-left: 0; }
-.trust-grid article > span { color: var(--yank-dark); font: 800 11px/1.4 var(--mono); }
-.trust-grid strong { font-size: 16px; }
-.trust-grid p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
-
-.archive-section { padding-block: 130px; background: var(--night); color: var(--bone); }
+.archive-section { padding-block: 115px; background: var(--night); color: var(--bone); }
 .archive-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: clamp(55px, 9vw, 125px); align-items: center; }
 .section-copy > p:not(.eyebrow) { max-width: 590px; color: #b7c4c9; font-size: 18px; }
 .archive-receipt { border: 1px solid #3b4c55; background: #10191e; box-shadow: 18px 18px 0 rgb(88 224 180 / 9%); }
@@ -286,7 +271,7 @@ h3 { margin-bottom: 12px; font-size: 24px; }
 .archive-receipt pre { margin: 0; padding: clamp(24px, 4vw, 42px); overflow-x: auto; color: #d8e1e2; font-size: clamp(11px, 1.35vw, 15px); line-height: 1.85; }
 .receipt-foot { border-top: 1px solid #3b4c55; color: var(--verified); }
 
-.workflow { padding-block: 130px 145px; }
+.workflow { padding-block: 115px 125px; }
 .section-heading { max-width: 850px; margin-bottom: 62px; }
 .section-heading > p:last-child { max-width: 670px; color: var(--muted); font-size: 19px; }
 .section-heading.compact { margin-bottom: 34px; }
@@ -306,33 +291,26 @@ h3 { margin-bottom: 12px; font-size: 24px; }
 .workflow-step > p { margin: 0; color: var(--muted); font-size: 14px; }
 .demo-caption { margin: 16px 0 0; color: var(--muted); font-size: 11px; text-align: right; }
 
-.safety-section { padding-block: 115px; background: var(--yank); color: #24110c; }
+.safety-section { padding-block: 100px; background: var(--yank); color: #24110c; }
 .safety-grid { display: grid; grid-template-columns: .95fr 1.05fr; gap: clamp(55px, 9vw, 125px); }
 .safety-list { border-top: 1px solid rgb(36 17 12 / 34%); }
 .safety-list article { padding: 23px 0; display: grid; grid-template-columns: 180px 1fr; gap: 25px; border-bottom: 1px solid rgb(36 17 12 / 34%); }
 .safety-list span { font: 850 10px/1.4 var(--mono); letter-spacing: .08em; }
 .safety-list p { margin: 0; font-size: 16px; }
 
-.boundary { padding-block: 110px; display: grid; grid-template-columns: 110px minmax(0, 760px); gap: clamp(30px, 6vw, 75px); align-items: start; }
-.boundary-mark { width: 90px; height: 90px; display: grid; place-items: center; border: 1px solid var(--amber); border-radius: 50%; color: #8b5a07; font-size: 38px; }
-.boundary h2 { font-size: clamp(40px, 5vw, 62px); }
-.boundary div > p:last-child { max-width: 760px; color: var(--muted); font-size: 18px; }
-
-.questions { padding-block: 40px 130px; }
-.faq { border-top: 1px solid #aeb8b4; }
-.faq details { border-bottom: 1px solid #aeb8b4; }
-.faq summary {
-  position: relative;
-  padding: 27px 52px 27px 0;
-  cursor: pointer;
-  list-style: none;
-  font-size: 20px;
-  font-weight: 780;
+.completion {
+  margin-block: 105px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border: 1px solid var(--rule);
+  background: var(--rule);
 }
-.faq summary::-webkit-details-marker { display: none; }
-.faq summary::after { content: "+"; position: absolute; right: 8px; color: var(--yank-dark); font: 400 27px/1 var(--mono); }
-.faq details[open] summary::after { content: "−"; }
-.faq details p { max-width: 770px; margin: -5px 0 27px; color: var(--muted); }
+.completion article { padding: clamp(34px, 5vw, 58px); background: var(--paper); }
+.completion h2 { font-size: clamp(38px, 4.5vw, 57px); }
+.completion article > p:last-child { margin-bottom: 0; color: var(--muted); font-size: 17px; }
+.completion code { color: var(--ink); font-size: .82em; font-weight: 800; }
+.completion-limit { box-shadow: inset 4px 0 0 var(--amber); }
 
 .download-section { padding-block: 115px; background: var(--night); color: var(--bone); }
 .download-grid { display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: clamp(50px, 9vw, 120px); }
@@ -364,6 +342,7 @@ h3 { margin-bottom: 12px; font-size: 24px; }
 .not-found .button { margin-top: 18px; }
 
 @media (max-width: 980px) {
+  .site-header nav a:not(.nav-download) { display: none; }
   .hero { min-height: auto; grid-template-columns: 1fr; padding-top: 64px; }
   .hero-copy { max-width: 760px; }
   .archive-route { width: min(100%, 720px); }
@@ -398,9 +377,6 @@ h3 { margin-bottom: 12px; font-size: 24px; }
   .folder-card { width: 94%; }
   .folder-body { padding: 15px; }
   .folder-row, .file-row { font-size: 9px; }
-  .trust-grid { grid-template-columns: 1fr; }
-  .trust-grid article { min-height: 0; border-left: 0; border-top: 1px solid var(--rule); }
-  .trust-grid article:first-child { border-top: 0; }
   .archive-section, .workflow, .safety-section, .download-section { padding-block: 82px; }
   .archive-grid { gap: 42px; }
   .archive-receipt { box-shadow: 9px 9px 0 rgb(88 224 180 / 9%); }
@@ -414,9 +390,9 @@ h3 { margin-bottom: 12px; font-size: 24px; }
   .demo-caption { text-align: left; }
   .safety-grid { gap: 36px; }
   .safety-list article { grid-template-columns: 1fr; gap: 8px; }
-  .boundary { padding-block: 82px; grid-template-columns: 1fr; gap: 30px; }
-  .boundary-mark { width: 64px; height: 64px; font-size: 28px; }
-  .questions { padding-block: 20px 82px; }
+  .completion { margin-block: 72px; grid-template-columns: 1fr; }
+  .completion article { padding: 28px; }
+  .completion-limit { box-shadow: inset 0 4px 0 var(--amber); }
   .download-grid { gap: 42px; }
   .install-command { align-items: flex-start; flex-wrap: wrap; }
   .install-command code { order: 3; width: 100%; padding-bottom: 4px; white-space: normal; overflow-wrap: anywhere; }

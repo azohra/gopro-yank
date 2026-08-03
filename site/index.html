@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>GoPro Yank — bring your GoPro library home</title>
-    <meta name="description" content="Download every available GoPro cloud original, verify every saved file, and keep a portable archive you control." />
+    <meta name="description" content="A free, open-source tool that downloads every available GoPro cloud original to a folder you choose and checks every saved file." />
     <meta name="theme-color" content="#f4f0e8" />
     <link rel="canonical" href="https://gopro-yank.azohra.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=archive-home" />
+    <link rel="stylesheet" href="/styles.css?v=purpose-pass" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="GoPro Yank — bring your GoPro library home" />
-    <meta property="og:description" content="Available originals, downloaded and verified in a portable archive you control." />
+    <meta property="og:description" content="A free, open-source tool for downloading available originals into a checked local archive." />
     <meta property="og:url" content="https://gopro-yank.azohra.com/" />
     <meta property="og:image" content="https://gopro-yank.azohra.com/og.png" />
     <meta property="og:image:width" content="1200" />
@@ -19,7 +19,7 @@
     <meta property="og:image:alt" content="GoPro Yank moving a media library into a checked local archive" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="GoPro Yank — bring your GoPro library home" />
-    <meta name="twitter:description" content="Available originals, downloaded and verified in a portable archive you control." />
+    <meta name="twitter:description" content="A free, open-source tool for downloading available originals into a checked local archive." />
     <meta name="twitter:image" content="https://gopro-yank.azohra.com/og.png" />
     <script src="/site.js" defer></script>
   </head>
@@ -32,9 +32,10 @@
         <span>gopro<span>-yank</span></span>
       </a>
       <nav aria-label="Main navigation">
-        <a href="#archive">The archive</a>
+        <a href="#archive">What you get</a>
+        <a href="#how">How it works</a>
         <a href="#safety">Safety</a>
-        <a href="#questions">Questions</a>
+        <a href="#limits">Completion</a>
         <a class="nav-download" href="https://github.com/azohra/gopro-yank/releases/latest">Download</a>
       </nav>
     </header>
@@ -42,14 +43,14 @@
     <main id="main">
       <section class="hero shell">
         <div class="hero-copy">
-          <p class="eyebrow"><span></span> Open source · macOS, Windows, Linux</p>
+          <p class="eyebrow"><span></span> Free and open source · runs on your computer</p>
           <h1>Bring your <em>GoPro library</em> home.</h1>
-          <p class="lede">Download every available original, check every saved file, and keep a portable archive you control.</p>
+          <p class="lede">GoPro Yank downloads every available original to a folder you choose, then checks every saved file.</p>
           <div class="hero-actions">
             <a class="button primary" href="https://github.com/azohra/gopro-yank/releases/latest">Download the latest release</a>
             <a class="button quiet" href="#how">See how it works <span aria-hidden="true">↓</span></a>
           </div>
-          <p class="hero-note">Want a harmless look first? <code>gopro-yank --demo</code> uses sample data and no account.</p>
+          <p class="hero-note">Preview the full flow with <code>gopro-yank --demo</code>—sample data, no account.</p>
         </div>
 
         <div class="archive-route" aria-label="Available GoPro originals moving into a checked local archive">
@@ -74,21 +75,13 @@
         </div>
       </section>
 
-      <section class="trust-band" aria-label="Product guarantees">
-        <div class="shell trust-grid">
-          <article><span>01</span><div><strong>Look first</strong><p>Your first library view is read-only.</p></div></article>
-          <article><span>02</span><div><strong>Stop safely</strong><p>Finished files stay finished.</p></div></article>
-          <article><span>03</span><div><strong>Know what arrived</strong><p>Every saved file is checked.</p></div></article>
-        </div>
-      </section>
-
       <section class="archive-section" id="archive">
         <div class="shell archive-grid">
           <div class="section-copy">
-            <p class="eyebrow light">The archive is the product</p>
+            <p class="eyebrow light">What you get</p>
             <h2>A normal folder.<br />No lock-in.</h2>
-            <p>Your photos and videos land in an ordinary folder on your computer or external drive. Move it, copy it, or inspect it without GoPro Yank.</p>
-            <p>The archive carries the evidence needed to understand it later: an index, checksums, dated library lists, and a readable offline report.</p>
+            <p>Your originals land in an ordinary folder on your computer or external drive. Move it, copy it, or inspect it without GoPro Yank.</p>
+            <p>The folder includes an index, dated library lists, and an offline report. GoPro does not publish the camera’s original checksums, so GoPro Yank records a SHA-256 checksum as each file arrives and uses it for later checks.</p>
           </div>
           <div class="archive-receipt" aria-label="Example GoPro Yank archive contents">
             <div class="receipt-head"><span>GOPRO / LOCAL ARCHIVE</span><span>READY</span></div>
@@ -106,9 +99,9 @@
 
       <section class="workflow shell" id="how">
         <div class="section-heading">
-          <p class="eyebrow">One careful flow</p>
+          <p class="eyebrow">How it works</p>
           <h2>Browse first. Archive when you decide.</h2>
-          <p>Opening the app reads your library. Downloading starts only after you choose a folder and confirm.</p>
+          <p>Connect through GoPro, review what is available, then choose a destination and confirm the download.</p>
         </div>
 
         <div class="workflow-grid">
@@ -126,7 +119,7 @@
           <article class="workflow-step featured">
             <div class="step-head"><span>02</span><strong>Review</strong></div>
             <div class="product-state">
-              <p class="state-kicker">LIBRARY READY · READ ONLY</p>
+              <p class="state-kicker">OFFLINE DEMO · LIBRARY READY · READ ONLY</p>
               <h3>Your library at a glance</h3>
               <div class="state-line"><span>Originals available</span><b>531</b></div>
               <div class="state-line"><span>Download size</span><b>244.8 GB</b></div>
@@ -146,64 +139,43 @@
             <p>Choose a folder, confirm the size, and let GoPro Yank download and check each available original.</p>
           </article>
         </div>
-        <p class="demo-caption">Illustrative values from the offline demo. Your library stays untouched until you confirm.</p>
+        <p class="demo-caption">The demo uses sample data. With your account, the first library view remains read-only until you confirm.</p>
       </section>
 
       <section class="safety-section" id="safety">
         <div class="shell safety-grid">
           <div>
-            <p class="eyebrow dark">Safe by design</p>
-            <h2>Your cloud library is never the cleanup target.</h2>
+            <p class="eyebrow dark">A one-way path</p>
+            <h2>It reads from GoPro. It writes to your folder.</h2>
           </div>
           <div class="safety-list">
-            <article><span>NO CLOUD DELETE</span><p>GoPro Yank reads and downloads. It never deletes media from GoPro.</p></article>
-            <article><span>EXPLICIT CONFIRMATION</span><p>You choose the destination and approve the download size before archiving starts.</p></article>
-            <article><span>MANIFEST-SCOPED CLEANUP</span><p>Local deletion removes only recorded archive files. Unrelated files and the folder itself remain.</p></article>
-            <article><span>RESUMABLE</span><p>Stop whenever you need to. Completed files remain completed for the next run.</p></article>
+            <article><span>CLOUD MEDIA UNTOUCHED</span><p>GoPro Yank never changes or deletes media from GoPro.</p></article>
+            <article><span>YOU CONFIRM FIRST</span><p>You see the destination and download size before any originals move.</p></article>
+            <article><span>STOP AND CONTINUE</span><p>Completed files stay completed, so the next run picks up what remains.</p></article>
+            <article><span>LOCAL CLEANUP STAYS LOCAL</span><p>If you remove an archive through the app, only files recorded in its manifest are deleted. Unrelated files and the folder remain.</p></article>
           </div>
         </div>
       </section>
 
-      <aside class="boundary shell" aria-label="Download boundary">
-        <span class="boundary-mark">!</span>
-        <div>
-          <p class="eyebrow">A clear boundary</p>
-          <h2>Available originals, honestly counted.</h2>
-          <p>GoPro does not offer every cloud item as a download. MultiClipEdit timelines still need a manual export, and GoPro Yank keeps them visible instead of pretending the archive is complete.</p>
-        </div>
-      </aside>
-
-      <section class="questions shell" id="questions">
-        <div class="section-heading compact">
-          <p class="eyebrow">Questions</p>
-          <h2>Before you trust it with your library.</h2>
-        </div>
-        <div class="faq">
-          <details>
-            <summary>Does it delete anything from GoPro?</summary>
-            <p>No. GoPro Yank never deletes cloud media.</p>
-          </details>
-          <details>
-            <summary>How does it know a file is intact?</summary>
-            <p>GoPro does not publish the camera’s original checksums. GoPro Yank records a SHA-256 checksum when each file enters your archive and checks against it afterward.</p>
-          </details>
-          <details>
-            <summary>What happens if I stop it?</summary>
-            <p>Completed files remain recorded and verified. Run GoPro Yank again and it continues with what remains.</p>
-          </details>
-          <details>
-            <summary>Where can the archive live?</summary>
-            <p>In any normal folder you choose, including an external drive. The archive is portable; your login remains on the computer where you connected it.</p>
-          </details>
-        </div>
+      <section class="completion shell" id="limits" aria-label="What complete means">
+        <article>
+          <p class="eyebrow">A clear finish line</p>
+          <h2>Complete means present and checked.</h2>
+          <p><code>DOWNLOADABLE MEDIA EXPORT COMPLETE</code> means every downloadable original in the latest library list is present in your archive and has passed its saved-file check.</p>
+        </article>
+        <article class="completion-limit">
+          <p class="eyebrow">Still visible</p>
+          <h2>Manual exports stay on the list.</h2>
+          <p>GoPro does not offer every cloud item as a download. MultiClipEdit timelines remain clearly listed for manual export, so you know exactly what still needs attention.</p>
+        </article>
       </section>
 
       <section class="download-section" id="download">
         <div class="shell download-grid">
           <div>
             <p class="eyebrow light">macOS · Windows · Linux</p>
-            <h2>Give your library an address you control.</h2>
-            <a class="button primary" href="https://github.com/azohra/gopro-yank/releases/latest">Choose your download</a>
+            <h2>Get your library onto a drive you control.</h2>
+            <a class="button primary" href="https://github.com/azohra/gopro-yank/releases/latest">Download GoPro Yank</a>
           </div>
           <div class="install-card">
             <div class="install-label"><span>macOS with Homebrew</span><span>recommended</span></div>
@@ -223,7 +195,7 @@
         <img src="/favicon.svg" alt="" width="32" height="32" />
         <span>gopro<span>-yank</span></span>
       </a>
-      <p>Made with ♥ by <a href="https://justin.azohra.com">Justin Watts</a>. Independent open-source software; not affiliated with GoPro, Inc.</p>
+      <p>Free and open source. Runs on your computer. Independent software; not affiliated with GoPro, Inc. Made with ♥ by <a href="https://justin.azohra.com">Justin Watts</a>.</p>
       <nav aria-label="Footer navigation"><a href="https://github.com/azohra/gopro-yank">Source</a><a href="https://github.com/azohra/gopro-yank/releases">Releases</a><a href="https://github.com/azohra/gopro-yank/blob/main/LICENSE">MIT License</a></nav>
     </footer>
   </body>
