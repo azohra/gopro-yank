@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#f4f0e8" />
     <link rel="canonical" href="https://gopro-yank.azohra.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=one-click-download" />
+    <link rel="stylesheet" href="/styles.css?v=show-the-product" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="GoPro Yank — bring your GoPro library home" />
     <meta property="og:description" content="Download available GoPro originals into a checked local archive." />
@@ -32,9 +32,8 @@
         <span>gopro<span>-yank</span></span>
       </a>
       <nav aria-label="Main navigation">
-        <a href="#archive">Your archive</a>
-        <a href="#how">How it works</a>
-        <a href="#before">Before you start</a>
+        <a href="#app">The app</a>
+        <a href="#behavior">Behavior</a>
         <a class="nav-download" href="#download">Download</a>
       </nav>
     </header>
@@ -74,7 +73,6 @@
               </div>
             </details>
           </div>
-          <p class="hero-note">Want to look around first? <code>gopro-yank --demo</code> uses sample data and no account.</p>
         </div>
 
         <div class="archive-route" aria-label="Available GoPro originals moving into a checked local archive">
@@ -99,61 +97,59 @@
         </div>
       </section>
 
-      <section class="archive-section" id="archive">
-        <div class="shell archive-grid">
-          <div class="archive-copy">
-            <h2>A normal folder.<br />No lock-in.</h2>
-            <p>Your photos and videos stay usable without GoPro Yank. Alongside them, you get a readable report, a library index, and checksums for the files that arrived.</p>
-            <p class="archive-destination">Put it on your computer, a NAS, or an external drive.</p>
+      <section class="product-section" id="app">
+        <div class="shell product-heading">
+          <h2>See the library before anything downloads.</h2>
+          <p>Run <code>gopro-yank --demo</code> for this sample flow. It does not connect an account or write an archive.</p>
+        </div>
+
+        <div class="shell terminal-stage">
+          <div class="terminal-window" aria-label="GoPro Yank demo showing a read-only GoPro library review">
+            <div class="terminal-titlebar">
+              <span aria-hidden="true"><i></i><i></i><i></i></span>
+              <strong>gopro-yank --demo</strong>
+              <b>OFFLINE</b>
+            </div>
+            <div class="terminal-screen">
+              <p class="terminal-brand">↓&nbsp; GOPRO YANK <span>OFFLINE DEMO</span></p>
+              <p class="terminal-tagline">Bring your GoPro library home.</p>
+              <div class="terminal-panel">
+                <h3>GOPRO LIBRARY</h3>
+                <p>847 originals · 386.0 GB · 2018-06-14 to 2026-07-28</p>
+                <dl>
+                  <div><dt>MultiClipEdit</dt><dd>4</dd></div>
+                  <div><dt>Photo</dt><dd>493</dd></div>
+                  <div><dt>Video</dt><dd>350</dd></div>
+                </dl>
+                <h3>ARCHIVE PLAN</h3>
+                <dl>
+                  <div><dt>Already archived</dt><dd>312</dd></div>
+                  <div><dt>Ready to archive</dt><dd>531&nbsp;&nbsp;244.0 GB</dd></div>
+                  <div><dt>Need manual export</dt><dd>4</dd></div>
+                  <div><dt>Folder</dt><dd>~/Pictures/GoPro</dd></div>
+                </dl>
+                <p class="terminal-safe"><span>●</span> Nothing was downloaded.</p>
+                <p class="terminal-keys"><b>enter</b> archive this library&nbsp;&nbsp;&nbsp; <b>e</b> change folder&nbsp;&nbsp;&nbsp; <b>esc</b> back</p>
+              </div>
+            </div>
           </div>
-          <div class="archive-receipt" aria-label="Example GoPro Yank archive contents">
-            <div class="receipt-head"><span>GOPRO / LOCAL ARCHIVE</span><span>READY</span></div>
-            <pre><code>GoPro/
-├── originals/            photos + videos
-└── .gopro-yank/
-    ├── report.html       open in a browser
-    ├── manifest.json     archive index
-    ├── checksums.sha256  saved-file checks
-    └── snapshots/        dated library lists</code></pre>
-            <div class="receipt-foot"><span>PORTABLE</span><span>READABLE</span><span>CHECKED</span></div>
-          </div>
+          <div class="terminal-caption"><span>Read-only until you confirm</span><span>Sample data, no account</span><span>Destination and size shown first</span></div>
         </div>
       </section>
 
-      <section class="workflow shell" id="how">
-        <div class="workflow-intro">
-          <h2>Look first.<br />Download second.</h2>
-          <p>The app stays read-only until you choose a destination and confirm the download.</p>
+      <section class="behavior-section" id="behavior">
+        <div class="shell behavior-heading">
+          <h2>What happens with your account and files.</h2>
         </div>
-        <ol class="workflow-list">
-          <li>
-            <span>01</span>
-            <div><h3>Connect on GoPro</h3><p>Sign in on GoPro’s website. Your password never enters the app.</p></div>
-          </li>
-          <li>
-            <span>02</span>
-            <div><h3>Review your library</h3><p>See capture dates, media types, total size, and anything that needs a manual export.</p></div>
-          </li>
-          <li>
-            <span>03</span>
-            <div><h3>Choose where it goes</h3><p>Confirm the size, start the archive, and stop or continue whenever you like.</p></div>
-          </li>
-        </ol>
-      </section>
-
-      <section class="before-section" id="before">
-        <div class="shell before-grid">
-          <div class="before-title">
-            <p>Before you start</p>
-            <h2>The useful fine print.</h2>
-          </div>
-          <dl class="fact-list">
-            <div><dt>Cloud media</dt><dd>GoPro Yank reads it. It never changes or deletes it.</dd></div>
-            <div><dt>Interrupted runs</dt><dd>Files already completed stay completed; the next run picks up what remains.</dd></div>
-            <div><dt>“Complete”</dt><dd>Every downloadable original in the latest library list is present and has passed its saved-file check.</dd></div>
-            <div><dt>MultiClipEdit</dt><dd>GoPro does not offer these timelines as downloads, so they remain listed for manual export.</dd></div>
-          </dl>
-        </div>
+        <dl class="shell behavior-list">
+          <div><dt>Sign-in</dt><dd>Your browser opens GoPro’s website. Your password never enters GoPro Yank.</dd></div>
+          <div><dt>Before download</dt><dd>You see media counts, types, total size, the destination, and items that need manual export.</dd></div>
+          <div><dt>On disk</dt><dd>Original files, an offline report, a manifest, dated library lists, and SHA-256 checksums.</dd></div>
+          <div><dt>Long runs</dt><dd>Stop at any time. A later run keeps completed files and continues with what remains.</dd></div>
+          <div><dt>GoPro cloud</dt><dd>The app reads your library. It never changes or deletes cloud media.</dd></div>
+          <div><dt>Not downloadable</dt><dd>MultiClipEdit timelines remain listed for manual export instead of being marked complete.</dd></div>
+        </dl>
+        <p class="shell endpoint-note">GoPro Yank uses undocumented GoPro cloud endpoints. If GoPro changes them, the app may need an update.</p>
       </section>
     </main>
 
