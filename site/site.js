@@ -1,18 +1,24 @@
-const downloads = {
+const installers = {
   macos: {
-    arm64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz",
-    amd64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_amd64.tar.gz",
-    label: "Download for macOS",
+    title: "Install on macOS",
+    help: "Open Terminal, paste this command, then press Return.",
+    command: 'curl -fsSL https://gopro-yank.azohra.com/install.sh | sh && "$HOME/.local/bin/gopro-yank"',
+    result: "The script selects the right Mac build, verifies its checksum, installs it, and opens GoPro Yank.",
+    source: "https://github.com/azohra/gopro-yank/blob/main/site/install.sh",
   },
   windows: {
-    arm64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_arm64.zip",
-    amd64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_amd64.zip",
-    label: "Download for Windows",
+    title: "Install on Windows",
+    help: "Open PowerShell, paste this command, then press Enter.",
+    command: "irm https://gopro-yank.azohra.com/install.ps1 | iex",
+    result: "The script selects the right Windows build, verifies its checksum, installs it, and opens GoPro Yank.",
+    source: "https://github.com/azohra/gopro-yank/blob/main/site/install.ps1",
   },
   linux: {
-    arm64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_arm64.tar.gz",
-    amd64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_amd64.tar.gz",
-    label: "Download for Linux",
+    title: "Install on Linux",
+    help: "Open a terminal, paste this command, then press Enter.",
+    command: 'curl -fsSL https://gopro-yank.azohra.com/install.sh | sh && "$HOME/.local/bin/gopro-yank"',
+    result: "The script selects the right Linux build, verifies its checksum, installs it, and opens GoPro Yank.",
+    source: "https://github.com/azohra/gopro-yank/blob/main/site/install.sh",
   },
 };
 
@@ -22,42 +28,53 @@ function detectPlatform() {
   if (value.includes("win")) return "windows";
   if (value.includes("mac")) return "macos";
   if (value.includes("linux") && !value.includes("android")) return "linux";
-  return null;
+  return "macos";
 }
 
-function architectureFrom(value) {
-  const normalized = String(value || "").toLowerCase();
-  if (normalized.includes("arm") || normalized.includes("aarch64")) return "arm64";
-  if (normalized.includes("x86") || normalized.includes("x64") || normalized.includes("amd64")) return "amd64";
-  return null;
+function configureInstaller() {
+  const installer = installers[detectPlatform()];
+  const title = document.querySelector("[data-install-title]");
+  const help = document.querySelector("[data-install-help]");
+  const command = document.querySelector("[data-install-command]");
+  const result = document.querySelector("[data-install-result]");
+  const source = document.querySelector("[data-installer-source]");
+  if (!title || !help || !command || !result || !source) return;
+
+  title.textContent = installer.title;
+  help.textContent = installer.help;
+  command.textContent = installer.command;
+  result.textContent = installer.result;
+  source.href = installer.source;
 }
 
-function setPrimaryDownload(platform, architecture) {
-  const primary = document.querySelector("[data-primary-download]");
-  const label = document.querySelector("[data-download-label]");
-  const meta = document.querySelector("[data-download-meta]");
-  if (!primary || !label || !meta || !downloads[platform]) return;
-
-  const fallback = platform === "macos" ? "arm64" : "amd64";
-  primary.href = downloads[platform][architecture || fallback];
-  label.textContent = downloads[platform].label;
-  meta.textContent = "Latest release · ready for this computer";
-}
-
-async function configureDownload() {
-  const platform = detectPlatform();
-  if (!platform) return;
-
-  let architecture = architectureFrom(navigator.userAgent);
-  if (navigator.userAgentData?.getHighEntropyValues) {
-    try {
-      const details = await navigator.userAgentData.getHighEntropyValues(["architecture", "bitness"]);
-      architecture = architectureFrom(details.architecture) || architecture;
-    } catch {
-      // The common architecture for each platform remains a safe fallback.
-    }
+async function copyText(button, value) {
+  try {
+    await navigator.clipboard.writeText(value);
+  } catch {
+    const textarea = document.createElement("textarea");
+    textarea.value = value;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.append(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    textarea.remove();
   }
-  setPrimaryDownload(platform, architecture);
+  const original = button.textContent;
+  button.textContent = "Copied";
+  window.setTimeout(() => { button.textContent = original; }, 1800);
 }
 
-configureDownload();
+function configureCopyButtons() {
+  const primary = document.querySelector("[data-copy-command]");
+  const command = document.querySelector("[data-install-command]");
+  if (primary && command) {
+    primary.addEventListener("click", () => copyText(primary, command.textContent));
+  }
+  document.querySelectorAll("[data-copy-value]").forEach((button) => {
+    button.addEventListener("click", () => copyText(button, button.dataset.copyValue));
+  });
+}
+
+configureInstaller();
+configureCopyButtons();

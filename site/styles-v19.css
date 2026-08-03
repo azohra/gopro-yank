@@ -37,8 +37,7 @@ button:focus-visible, a:focus-visible {
   outline-offset: 4px;
 }
 code, pre, .wordmark, .product-note, .source-label, .folder-tab,
-.alternate-downloads, .terminal-window, .terminal-caption, .behavior-list dt,
-.endpoint-note {
+.alternate-downloads, .terminal-window, .demo-note {
   font-family: var(--mono);
 }
 h1, h2, h3, p { text-wrap: pretty; }
@@ -127,26 +126,26 @@ h3 { margin-bottom: 10px; font-size: 25px; }
   background: linear-gradient(transparent 78%, #f7b8aa 78%);
 }
 .lede { max-width: 620px; margin: 0; color: #46565d; font-size: clamp(19px, 1.8vw, 23px); line-height: 1.5; }
-.hero-actions { max-width: 470px; margin-top: 34px; scroll-margin-top: 28px; }
-.download-button {
-  min-height: 78px;
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 17px;
+.hero-actions { max-width: 650px; margin-top: 34px; scroll-margin-top: 28px; }
+.install-panel {
+  padding: 22px;
   border: 1px solid var(--night);
   border-radius: 12px;
   background: var(--night);
   color: #fff;
   box-shadow: 0 10px 24px rgb(11 17 21 / 16%);
-  text-decoration: none;
-  transition: transform 150ms ease, box-shadow 150ms ease;
 }
-.download-button:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgb(11 17 21 / 21%); }
-.download-button-icon { width: 37px; height: 37px; flex: 0 0 auto; fill: none; stroke: var(--verified); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.download-button span { display: grid; gap: 3px; }
-.download-button strong { font-size: 17px; letter-spacing: -.015em; }
-.download-button small { color: #a9bbc2; font-size: 11px; }
+.install-title { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.install-title strong { font-size: 18px; letter-spacing: -.02em; }
+.install-title span { padding: 4px 8px; border: 1px solid #34444c; border-radius: 999px; color: var(--verified); font: 750 9px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.install-panel > p { margin: 7px 0 15px; color: #a9bbc2; font-size: 13px; }
+.command-row, .small-command { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: stretch; border: 1px solid #34444c; border-radius: 8px; background: #05090b; }
+.command-row code, .small-command code { min-width: 0; padding: 13px 14px; overflow-x: auto; color: #eef5f2; font-size: 11px; line-height: 1.45; white-space: nowrap; scrollbar-width: thin; }
+.command-row button, .small-command button { padding: 0 14px; border: 0; border-left: 1px solid #34444c; border-radius: 0 7px 7px 0; background: #16242b; color: var(--verified); cursor: pointer; font: 800 10px/1 var(--mono); }
+.command-row button:hover, .small-command button:hover { background: #21333b; }
+.install-panel .install-result { margin-bottom: 5px; color: #8fa7b2; font-size: 11px; }
+.inspect-link { color: #bdd0d7; font: 700 10px/1 var(--mono); }
+.inspect-link:hover { color: #fff; }
 .alternate-downloads { position: relative; margin-top: 12px; color: var(--muted); font-size: 12px; }
 .alternate-downloads summary { width: fit-content; cursor: pointer; font-weight: 750; list-style-position: inside; }
 .alternate-downloads summary:hover { color: var(--ink); }
@@ -155,10 +154,10 @@ h3 { margin-bottom: 10px; font-size: 25px; }
   z-index: 10;
   top: calc(100% + 10px);
   left: 0;
-  width: min(620px, calc(100vw - 48px));
+  width: min(650px, calc(100vw - 48px));
   padding: 18px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1.15fr .85fr;
   gap: 18px;
   border: 1px solid var(--rule);
   border-radius: 12px;
@@ -167,11 +166,12 @@ h3 { margin-bottom: 10px; font-size: 25px; }
 }
 .alternate-grid section { min-width: 0; }
 .alternate-grid h3 { margin: 0 0 10px; font: 800 11px/1.2 var(--mono); letter-spacing: 0; }
-.alternate-grid a { display: block; padding-block: 5px; color: #52636a; font: 700 11px/1.3 var(--sans); }
+.alternate-grid p { margin: -3px 0 7px; color: var(--muted); font: 11px/1.45 var(--sans); }
+.alternate-grid a { display: inline-block; padding: 5px 12px 5px 0; color: #52636a; font: 700 11px/1.3 var(--sans); }
 .alternate-grid a:hover { color: var(--ink); }
-.platform-mark { margin-right: 4px; color: var(--verified-dark); }
-.platform-mark.windows { color: #286fd1; }
-.platform-mark.linux { color: #d28a16; }
+.small-command code { padding: 10px 11px; color: var(--ink); background: #eef2f0; font-size: 9px; }
+.small-command button { padding-inline: 10px; border-left-color: var(--rule); background: #dce6e2; color: #08684f; }
+.small-command button:hover { background: #d1ded9; }
 
 .button {
   min-height: 50px;
@@ -234,17 +234,9 @@ h3 { margin-bottom: 10px; font-size: 25px; }
 .verified-stamp { padding: 12px 20px; display: flex; align-items: center; gap: 8px; border-top: 1px solid #26363e; color: var(--verified); font: 800 10px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; }
 .route-caption { margin: 20px 0 0; color: var(--muted); font: 700 10px/1 var(--mono); text-align: right; text-transform: uppercase; }
 
-.product-section { padding-block: clamp(84px, 9vw, 116px); border-top: 1px solid var(--rule); background: var(--paper); }
-.product-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 55px;
-}
-.product-heading h2 { max-width: 760px; margin-bottom: 0; font-size: clamp(40px, 4.8vw, 62px); }
-.product-heading > p { max-width: 360px; margin: 0 0 5px; color: var(--muted); font-size: 16px; }
-.product-heading code { color: var(--ink); font-weight: 750; }
-.terminal-stage { margin-top: 46px; }
+.product-section { padding-block: clamp(70px, 8vw, 96px); border-top: 1px solid var(--rule); background: var(--paper); }
+.terminal-stage { margin-top: 0; }
+.product-intro { max-width: 780px; margin: 0 auto 30px; color: #46565d; font-size: clamp(18px, 2vw, 23px); font-weight: 650; line-height: 1.45; }
 .terminal-window {
   max-width: 1040px;
   margin-inline: auto;
@@ -277,15 +269,8 @@ h3 { margin-bottom: 10px; font-size: 25px; }
 .terminal-safe span { color: var(--verified); }
 .terminal-keys { margin: 0; color: #c5c9e6; font-size: 12px; }
 .terminal-keys b { color: var(--verified); }
-.terminal-caption { max-width: 1040px; margin: 15px auto 0; display: flex; justify-content: space-between; gap: 18px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-
-.behavior-section { padding-block: clamp(80px, 9vw, 112px); background: #e7efed; }
-.behavior-heading h2 { max-width: 800px; margin-bottom: 46px; font-size: clamp(38px, 4.5vw, 58px); }
-.behavior-list { margin-block: 0; border-top: 1px solid rgb(23 33 38 / 25%); }
-.behavior-list > div { padding: 21px 0; display: grid; grid-template-columns: 190px 1fr; gap: 32px; border-bottom: 1px solid rgb(23 33 38 / 25%); }
-.behavior-list dt { color: #40545b; font-size: 10px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
-.behavior-list dd { max-width: 760px; margin: 0; font-size: 16px; }
-.endpoint-note { margin-top: 28px; margin-bottom: 0; color: #53676e; font-size: 10px; }
+.demo-note { max-width: 1040px; margin: 16px auto 0; color: var(--muted); font-size: 11px; }
+.demo-note code { color: var(--ink); font-weight: 800; }
 
 .site-footer { min-height: 130px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 36px; }
 .site-footer p { margin: 0; color: var(--muted); font-size: 12px; text-align: center; }
@@ -312,7 +297,9 @@ h3 { margin-bottom: 10px; font-size: 25px; }
   h1 { font-size: clamp(50px, 15vw, 68px); line-height: .92; }
   h2 { font-size: clamp(40px, 12vw, 56px); }
   .lede { font-size: 18px; }
-  .download-button { min-height: 70px; padding: 13px 16px; }
+  .install-panel { padding: 17px; }
+  .command-row { grid-template-columns: 1fr; }
+  .command-row button { min-height: 42px; border-top: 1px solid #34444c; border-left: 0; border-radius: 0 0 7px 7px; }
   .alternate-grid { position: static; margin-top: 12px; grid-template-columns: 1fr; }
   .button { width: 100%; }
   .archive-route { min-height: 0; padding: 18px; border-radius: 13px; box-shadow: 9px 9px 0 #dfe8e4; }
@@ -325,10 +312,7 @@ h3 { margin-bottom: 10px; font-size: 25px; }
   .folder-card { width: 94%; }
   .folder-body { padding: 15px; }
   .folder-row, .file-row { font-size: 9px; }
-  .product-heading { display: block; }
-  .product-heading h2 { font-size: clamp(38px, 11vw, 52px); }
-  .product-heading > p { margin-top: 22px; }
-  .terminal-stage { margin-top: 34px; }
+  .product-intro { margin-bottom: 24px; font-size: 17px; }
   .terminal-window { border-radius: 10px; }
   .terminal-titlebar { padding-inline: 12px; }
   .terminal-screen { padding: 20px 14px; }
@@ -338,10 +322,6 @@ h3 { margin-bottom: 10px; font-size: 25px; }
   .terminal-panel dl > div { grid-template-columns: minmax(125px, 1fr) minmax(65px, auto); gap: 10px; }
   .terminal-panel dt, .terminal-panel dd, .terminal-panel > p:not(.terminal-safe, .terminal-keys), .terminal-safe { font-size: 10px; }
   .terminal-keys { font-size: 9px; line-height: 1.8; }
-  .terminal-caption { align-items: flex-start; flex-direction: column; gap: 5px; }
-  .behavior-heading h2 { margin-bottom: 32px; font-size: clamp(36px, 10vw, 48px); }
-  .behavior-list > div { grid-template-columns: 1fr; gap: 7px; }
-  .behavior-list dd { font-size: 15px; }
   .site-footer { padding-block: 34px; grid-template-columns: 1fr; justify-items: start; gap: 20px; }
   .site-footer p { text-align: left; }
   .site-footer nav { flex-wrap: wrap; }
@@ -351,7 +331,7 @@ h3 { margin-bottom: 10px; font-size: 25px; }
   .wordmark { font-size: 15px; }
   .wordmark img { width: 32px; height: 32px; }
   .site-header .nav-download { font-size: 12px; }
-  .download-button strong { font-size: 15px; }
+  .install-title strong { font-size: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

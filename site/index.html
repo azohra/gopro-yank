@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>GoPro Yank — bring your GoPro library home</title>
+    <title>GoPro Yank — download your GoPro Cloud library</title>
     <meta name="description" content="Download every available GoPro cloud original to a folder you choose, then check every saved file." />
     <meta name="theme-color" content="#f4f0e8" />
     <link rel="canonical" href="https://gopro-yank.azohra.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles-v17.css" />
+    <link rel="stylesheet" href="/styles-v19.css" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="GoPro Yank — bring your GoPro library home" />
+    <meta property="og:title" content="GoPro Yank — download your GoPro Cloud library" />
     <meta property="og:description" content="Download available GoPro originals into a checked local archive." />
     <meta property="og:url" content="https://gopro-yank.azohra.com/" />
     <meta property="og:image" content="https://gopro-yank.azohra.com/og.png" />
@@ -18,10 +18,10 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="GoPro Yank moving a media library into a checked local archive" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="GoPro Yank — bring your GoPro library home" />
+    <meta name="twitter:title" content="GoPro Yank — download your GoPro Cloud library" />
     <meta name="twitter:description" content="Download available GoPro originals into a checked local archive." />
     <meta name="twitter:image" content="https://gopro-yank.azohra.com/og.png" />
-    <script src="/site.js?v=one-click-download" defer></script>
+    <script src="/site.js?v=installer" defer></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -32,9 +32,8 @@
         <span>gopro<span>-yank</span></span>
       </a>
       <nav aria-label="Main navigation">
-        <a href="#app">The app</a>
-        <a href="#behavior">Behavior</a>
-        <a class="nav-download" href="#download">Download</a>
+        <a href="https://github.com/azohra/gopro-yank">Source</a>
+        <a class="nav-download" href="#install">Install</a>
       </nav>
     </header>
 
@@ -42,33 +41,37 @@
       <section class="hero shell">
         <div class="hero-copy">
           <p class="product-note"><span></span> Free · open source · runs on your computer</p>
-          <h1>Bring your <em>GoPro library</em> home.</h1>
-          <p class="lede">Download every available original to a folder or external drive you choose. GoPro Yank checks each file as it arrives.</p>
-          <div class="hero-actions" id="download">
-            <a class="download-button" data-primary-download href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz">
-              <svg class="download-button-icon" viewBox="0 0 48 48" aria-hidden="true">
-                <path d="M24 8v20m-8-7 8 8 8-8" />
-                <path d="M10 28v8c0 2 2 4 4 4h20c2 0 4-2 4-4v-8" />
-              </svg>
-              <span><strong data-download-label>Download for macOS</strong><small data-download-meta>Latest release</small></span>
-            </a>
-            <details class="alternate-downloads" id="alternate-downloads">
-              <summary>Not this computer?</summary>
+          <h1>Download your <em>GoPro Cloud library.</em></h1>
+          <p class="lede">Save every available photo and video to a folder or external drive you choose. GoPro Yank checks each file as it arrives.</p>
+          <div class="hero-actions" id="install">
+            <div class="install-panel">
+              <div class="install-title"><strong data-install-title>Install on macOS</strong><span>Terminal</span></div>
+              <p data-install-help>Open Terminal, paste this command, then press Return.</p>
+              <div class="command-row">
+                <code data-install-command>curl -fsSL https://gopro-yank.azohra.com/install.sh | sh &amp;&amp; "$HOME/.local/bin/gopro-yank"</code>
+                <button type="button" data-copy-command>Copy</button>
+              </div>
+              <p class="install-result" data-install-result>The script selects the right build, verifies its checksum, installs it, and opens GoPro Yank.</p>
+              <a class="inspect-link" data-installer-source href="https://github.com/azohra/gopro-yank/blob/main/site/install.sh">Read the install script</a>
+            </div>
+            <details class="alternate-downloads">
+              <summary>Other ways to install</summary>
               <div class="alternate-grid">
-                <section>
-                  <h3><span class="platform-mark mac" aria-hidden="true">●</span> macOS</h3>
-                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz">Most Macs</a>
-                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_amd64.tar.gz">Intel Macs</a>
+                <section class="homebrew-option">
+                  <h3>Homebrew</h3>
+                  <div class="small-command">
+                    <code>brew install --cask azohra/tools/gopro-yank</code>
+                    <button type="button" data-copy-value="brew install --cask azohra/tools/gopro-yank">Copy</button>
+                  </div>
                 </section>
-                <section>
-                  <h3><span class="platform-mark windows" aria-hidden="true">⊞</span> Windows</h3>
-                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_amd64.zip">Most PCs</a>
-                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_arm64.zip">ARM PCs</a>
-                </section>
-                <section>
-                  <h3><span class="platform-mark linux" aria-hidden="true">◆</span> Linux</h3>
-                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_amd64.tar.gz">Most PCs</a>
-                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_arm64.tar.gz">ARM64</a>
+                <section class="manual-option">
+                  <h3>Manual downloads</h3>
+                  <p>For people who want to place the executable themselves.</p>
+                  <nav aria-label="Manual downloads">
+                    <a href="https://github.com/azohra/gopro-yank/releases/latest">macOS</a>
+                    <a href="https://github.com/azohra/gopro-yank/releases/latest">Windows</a>
+                    <a href="https://github.com/azohra/gopro-yank/releases/latest">Linux</a>
+                  </nav>
                 </section>
               </div>
             </details>
@@ -98,12 +101,8 @@
       </section>
 
       <section class="product-section" id="app">
-        <div class="shell product-heading">
-          <h2>See the library before anything downloads.</h2>
-          <p>Run <code>gopro-yank --demo</code> for this sample flow. It does not connect an account or write an archive.</p>
-        </div>
-
         <div class="shell terminal-stage">
+          <p class="product-intro">Before anything downloads, GoPro Yank shows what is available, how much space it needs, and where it will be saved.</p>
           <div class="terminal-window" aria-label="GoPro Yank demo showing a read-only GoPro library review">
             <div class="terminal-titlebar">
               <span aria-hidden="true"><i></i><i></i><i></i></span>
@@ -133,23 +132,8 @@
               </div>
             </div>
           </div>
-          <div class="terminal-caption"><span>Read-only until you confirm</span><span>Sample data, no account</span><span>Destination and size shown first</span></div>
+          <p class="demo-note">Try it with sample data: <code>gopro-yank --demo</code></p>
         </div>
-      </section>
-
-      <section class="behavior-section" id="behavior">
-        <div class="shell behavior-heading">
-          <h2>What happens with your account and files.</h2>
-        </div>
-        <dl class="shell behavior-list">
-          <div><dt>Sign-in</dt><dd>Your browser opens GoPro’s website. Your password never enters GoPro Yank.</dd></div>
-          <div><dt>Before download</dt><dd>You see media counts, types, total size, the destination, and items that need manual export.</dd></div>
-          <div><dt>On disk</dt><dd>Original files, an offline report, a manifest, dated library lists, and SHA-256 checksums.</dd></div>
-          <div><dt>Long runs</dt><dd>Stop at any time. A later run keeps completed files and continues with what remains.</dd></div>
-          <div><dt>GoPro cloud</dt><dd>The app reads your library. It never changes or deletes cloud media.</dd></div>
-          <div><dt>Not downloadable</dt><dd>MultiClipEdit timelines remain listed for manual export instead of being marked complete.</dd></div>
-        </dl>
-        <p class="shell endpoint-note">GoPro Yank uses undocumented GoPro cloud endpoints. If GoPro changes them, the app may need an update.</p>
       </section>
     </main>
 
@@ -158,7 +142,7 @@
         <img src="/favicon.svg" alt="" width="32" height="32" />
         <span>gopro<span>-yank</span></span>
       </a>
-      <p>Free and open source. Independent software; not affiliated with GoPro, Inc. Made with ♥ by <a href="https://justin.azohra.com">Justin Watts</a>.</p>
+      <p>Independent open-source software; not affiliated with GoPro, Inc. Uses undocumented GoPro Cloud endpoints. Made with ♥ by <a href="https://justin.azohra.com">Justin Watts</a>.</p>
       <nav aria-label="Footer navigation"><a href="https://github.com/azohra/gopro-yank">Source</a><a href="https://github.com/azohra/gopro-yank/releases">All releases</a><a href="https://github.com/azohra/gopro-yank/blob/main/LICENSE">MIT License</a></nav>
     </footer>
   </body>
