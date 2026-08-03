@@ -5,7 +5,7 @@
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
 
-/styles.css
+/styles*.css
   Cache-Control: public, max-age=3600
 
 /site.js
