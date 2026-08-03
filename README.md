@@ -16,6 +16,15 @@ originals. Every saved file is checked. Nothing is deleted from GoPro.
 ## Get going
 
 ```sh
+curl -fsSL https://gopro-yank.azohra.com/install.sh | sh && "$HOME/.local/bin/gopro-yank"
+```
+
+The install script selects the build for your computer, verifies it against the
+published release checksum, and installs `gopro-yank` in `~/.local/bin`.
+
+Prefer Homebrew?
+
+```sh
 brew install --cask azohra/tools/gopro-yank
 gopro-yank
 ```
