@@ -20,7 +20,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		"The app stays read-only until you choose a destination and confirm the download.",
 		"It never changes or deletes it.",
 		"they remain listed for manual export",
-		"brew install --cask azohra/tools/gopro-yank",
+		"data-primary-download",
 		"releases/latest/download/gopro-yank_darwin_arm64.tar.gz",
 		"releases/latest/download/gopro-yank_windows_amd64.zip",
 		"releases/latest/download/gopro-yank_linux_amd64.tar.gz",
@@ -35,7 +35,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(pagePayload), "styles.css?v=direct-downloads") {
+		if !strings.Contains(string(pagePayload), "styles.css?v=one-click-download") {
 			t.Errorf("%s does not use the current stylesheet cache key", page)
 		}
 		for _, match := range localReference.FindAllStringSubmatch(string(pagePayload), -1) {
@@ -48,7 +48,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		}
 	}
 	for _, expected := range []string{
-		`styles.css?v=direct-downloads`,
+		`styles.css?v=one-click-download`,
 		`og:image:width" content="1200"`,
 		`og:image:height" content="630"`,
 		`og:image:alt`,

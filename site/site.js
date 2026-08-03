@@ -1,52 +1,63 @@
-const tabs = [...document.querySelectorAll("[data-platform]")];
-const panels = [...document.querySelectorAll("[data-platform-panel]")];
+const downloads = {
+  macos: {
+    arm64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz",
+    amd64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_amd64.tar.gz",
+    label: "Download for macOS",
+  },
+  windows: {
+    arm64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_arm64.zip",
+    amd64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_amd64.zip",
+    label: "Download for Windows",
+  },
+  linux: {
+    arm64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_arm64.tar.gz",
+    amd64: "https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_amd64.tar.gz",
+    label: "Download for Linux",
+  },
+};
 
-function showPlatform(platform, moveFocus = false) {
-  const selected = tabs.find((tab) => tab.dataset.platform === platform);
-  if (!selected) return;
-
-  tabs.forEach((tab) => {
-    const active = tab === selected;
-    tab.setAttribute("aria-selected", String(active));
-    tab.tabIndex = active ? 0 : -1;
-  });
-  panels.forEach((panel) => {
-    panel.hidden = panel.dataset.platformPanel !== platform;
-  });
-  if (moveFocus) selected.focus();
-}
-
-function detectedPlatform() {
+function detectPlatform() {
   const platform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent;
   const value = platform.toLowerCase();
   if (value.includes("win")) return "windows";
   if (value.includes("mac")) return "macos";
-  if (value.includes("linux")) return "linux";
+  if (value.includes("linux") && !value.includes("android")) return "linux";
   return null;
 }
 
-tabs.forEach((tab, index) => {
-  tab.addEventListener("click", () => showPlatform(tab.dataset.platform));
-  tab.addEventListener("keydown", (event) => {
-    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-    event.preventDefault();
-    const direction = event.key === "ArrowRight" ? 1 : -1;
-    const next = (index + direction + tabs.length) % tabs.length;
-    showPlatform(tabs[next].dataset.platform, true);
-  });
-});
+function architectureFrom(value) {
+  const normalized = String(value || "").toLowerCase();
+  if (normalized.includes("arm") || normalized.includes("aarch64")) return "arm64";
+  if (normalized.includes("x86") || normalized.includes("x64") || normalized.includes("amd64")) return "amd64";
+  return null;
+}
 
-const platform = detectedPlatform();
-if (platform) showPlatform(platform);
+function setPrimaryDownload(platform, architecture) {
+  const primary = document.querySelector("[data-primary-download]");
+  const label = document.querySelector("[data-download-label]");
+  const meta = document.querySelector("[data-download-meta]");
+  if (!primary || !label || !meta || !downloads[platform]) return;
 
-document.querySelectorAll("[data-copy]").forEach((button) => {
-  button.addEventListener("click", async () => {
+  const fallback = platform === "macos" ? "arm64" : "amd64";
+  primary.href = downloads[platform][architecture || fallback];
+  label.textContent = downloads[platform].label;
+  meta.textContent = "Latest release · ready for this computer";
+}
+
+async function configureDownload() {
+  const platform = detectPlatform();
+  if (!platform) return;
+
+  let architecture = architectureFrom(navigator.userAgent);
+  if (navigator.userAgentData?.getHighEntropyValues) {
     try {
-      await navigator.clipboard.writeText(button.dataset.copy);
-      button.textContent = "Copied";
-      window.setTimeout(() => { button.textContent = "Copy"; }, 1600);
+      const details = await navigator.userAgentData.getHighEntropyValues(["architecture", "bitness"]);
+      architecture = architectureFrom(details.architecture) || architecture;
     } catch {
-      button.textContent = "Select the command";
+      // The common architecture for each platform remains a safe fallback.
     }
-  });
-});
+  }
+  setPrimaryDownload(platform, architecture);
+}
+
+configureDownload();
