@@ -17,9 +17,10 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 	html := string(payload)
 	for _, expected := range []string{
 		"Bring your <em>GoPro library</em> home.",
-		"The app stays read-only until you choose a destination and confirm the download.",
-		"It never changes or deletes it.",
-		"they remain listed for manual export",
+		"Nothing was downloaded.",
+		"Your password never enters GoPro Yank.",
+		"It never changes or deletes cloud media.",
+		"MultiClipEdit timelines remain listed for manual export",
 		"data-primary-download",
 		"releases/latest/download/gopro-yank_darwin_arm64.tar.gz",
 		"releases/latest/download/gopro-yank_windows_amd64.zip",
@@ -35,7 +36,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !strings.Contains(string(pagePayload), "styles.css?v=one-click-download") {
+		if !strings.Contains(string(pagePayload), "styles.css?v=show-the-product") {
 			t.Errorf("%s does not use the current stylesheet cache key", page)
 		}
 		for _, match := range localReference.FindAllStringSubmatch(string(pagePayload), -1) {
@@ -48,7 +49,7 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		}
 	}
 	for _, expected := range []string{
-		`styles.css?v=one-click-download`,
+		`styles.css?v=show-the-product`,
 		`og:image:width" content="1200"`,
 		`og:image:height" content="630"`,
 		`og:image:alt`,
