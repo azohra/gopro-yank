@@ -16,9 +16,10 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 	}
 	html := string(payload)
 	for _, expected := range []string{
-		"Bring your GoPro library home.",
-		"Nothing downloads.",
+		"Bring your <em>GoPro library</em> home.",
+		"Downloading starts only after",
 		"never deletes cloud media",
+		"MultiClipEdit timelines still need a manual export",
 		"brew install --cask azohra/tools/gopro-yank",
 	} {
 		if !strings.Contains(html, expected) {
@@ -26,12 +27,43 @@ func TestStaticSiteIsSelfContained(t *testing.T) {
 		}
 	}
 	localReference := regexp.MustCompile(`(?:href|src)="(/[^"#?]*)(?:[?#][^"]*)?"`)
-	for _, match := range localReference.FindAllStringSubmatch(html, -1) {
-		if match[1] == "/" {
-			continue
+	for _, page := range []string{"index.html", "404.html"} {
+		pagePayload, err := os.ReadFile(filepath.Join(site, page))
+		if err != nil {
+			t.Fatal(err)
 		}
-		if _, err := os.Stat(filepath.Join(site, filepath.FromSlash(strings.TrimPrefix(match[1], "/")))); err != nil {
-			t.Errorf("missing local site asset %s: %v", match[1], err)
+		if !strings.Contains(string(pagePayload), "styles.css?v=archive-home") {
+			t.Errorf("%s does not use the current stylesheet cache key", page)
+		}
+		for _, match := range localReference.FindAllStringSubmatch(string(pagePayload), -1) {
+			if match[1] == "/" {
+				continue
+			}
+			if _, err := os.Stat(filepath.Join(site, filepath.FromSlash(strings.TrimPrefix(match[1], "/")))); err != nil {
+				t.Errorf("%s references missing local site asset %s: %v", page, match[1], err)
+			}
+		}
+	}
+	for _, expected := range []string{
+		`styles.css?v=archive-home`,
+		`og:image:width" content="1200"`,
+		`og:image:height" content="630"`,
+		`og:image:alt`,
+	} {
+		if !strings.Contains(html, expected) {
+			t.Errorf("site metadata is missing %q", expected)
+		}
+	}
+	if strings.Contains(html, "raw.githubusercontent.com") {
+		t.Fatal("site should not depend on a GitHub-hosted presentation asset")
+	}
+	preview, err := os.Stat(filepath.Join(site, "og.png"))
+	if err != nil || preview.Size() == 0 {
+		t.Fatalf("site is missing its evergreen social preview: %v", err)
+	}
+	for _, anchor := range regexp.MustCompile(`href="#([^"]+)"`).FindAllStringSubmatch(html, -1) {
+		if !strings.Contains(html, `id="`+anchor[1]+`"`) {
+			t.Errorf("site links to missing anchor #%s", anchor[1])
 		}
 	}
 	headers, err := os.ReadFile(filepath.Join(site, "_headers"))
