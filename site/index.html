@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#f4f0e8" />
     <link rel="canonical" href="https://gopro-yank.azohra.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=direct-downloads" />
+    <link rel="stylesheet" href="/styles.css?v=one-click-download" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="GoPro Yank — bring your GoPro library home" />
     <meta property="og:description" content="Download available GoPro originals into a checked local archive." />
@@ -21,7 +21,7 @@
     <meta name="twitter:title" content="GoPro Yank — bring your GoPro library home" />
     <meta name="twitter:description" content="Download available GoPro originals into a checked local archive." />
     <meta name="twitter:image" content="https://gopro-yank.azohra.com/og.png" />
-    <script src="/site.js?v=direct-downloads" defer></script>
+    <script src="/site.js?v=one-click-download" defer></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -45,52 +45,57 @@
           <p class="product-note"><span></span> Free · open source · runs on your computer</p>
           <h1>Bring your <em>GoPro library</em> home.</h1>
           <p class="lede">Download every available original to a folder or external drive you choose. GoPro Yank checks each file as it arrives.</p>
+          <div class="hero-actions" id="download">
+            <a class="download-button" data-primary-download href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz">
+              <svg class="download-button-icon" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M24 8v20m-8-7 8 8 8-8" />
+                <path d="M10 28v8c0 2 2 4 4 4h20c2 0 4-2 4-4v-8" />
+              </svg>
+              <span><strong data-download-label>Download for macOS</strong><small data-download-meta>Latest release</small></span>
+            </a>
+            <details class="alternate-downloads" id="alternate-downloads">
+              <summary>Not this computer?</summary>
+              <div class="alternate-grid">
+                <section>
+                  <h3><span class="platform-mark mac" aria-hidden="true">●</span> macOS</h3>
+                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz">Most Macs</a>
+                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_amd64.tar.gz">Intel Macs</a>
+                </section>
+                <section>
+                  <h3><span class="platform-mark windows" aria-hidden="true">⊞</span> Windows</h3>
+                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_amd64.zip">Most PCs</a>
+                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_arm64.zip">ARM PCs</a>
+                </section>
+                <section>
+                  <h3><span class="platform-mark linux" aria-hidden="true">◆</span> Linux</h3>
+                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_amd64.tar.gz">Most PCs</a>
+                  <a href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_arm64.tar.gz">ARM64</a>
+                </section>
+              </div>
+            </details>
+          </div>
           <p class="hero-note">Want to look around first? <code>gopro-yank --demo</code> uses sample data and no account.</p>
         </div>
 
-        <div class="download-picker" id="download">
-          <div class="picker-head">
-            <span>DOWNLOAD GOPRO YANK</span>
-            <a href="https://github.com/azohra/gopro-yank/releases/latest">Release notes</a>
+        <div class="archive-route" aria-label="Available GoPro originals moving into a checked local archive">
+          <div class="source-label"><span>From</span> GoPro cloud library</div>
+          <div class="media-reel" aria-hidden="true">
+            <div class="media-card coast"><span>GX010118</span><b>00:42</b></div>
+            <div class="media-card snow"><span>GX010119</span><b>01:08</b></div>
+            <div class="media-card trail"><span>GOPR0120</span><b>PHOTO</b></div>
           </div>
-          <div class="platform-tabs" role="tablist" aria-label="Operating system">
-            <button type="button" role="tab" aria-selected="true" aria-controls="panel-macos" id="tab-macos" data-platform="macos">macOS</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="panel-windows" id="tab-windows" data-platform="windows" tabindex="-1">Windows</button>
-            <button type="button" role="tab" aria-selected="false" aria-controls="panel-linux" id="tab-linux" data-platform="linux" tabindex="-1">Linux</button>
-          </div>
-
-          <div class="platform-panel" id="panel-macos" role="tabpanel" aria-labelledby="tab-macos" data-platform-panel="macos">
-            <p class="platform-prompt">Choose your Mac</p>
-            <div class="download-actions">
-              <a class="button primary" href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_arm64.tar.gz">Apple silicon</a>
-              <a class="button secondary" href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_darwin_amd64.tar.gz">Intel</a>
+          <div class="transfer-path" aria-hidden="true"><span>available originals</span><i>↓</i></div>
+          <div class="folder-card">
+            <div class="folder-tab">GoPro/</div>
+            <div class="folder-body">
+              <div class="folder-row"><span>originals/</span><strong>saved</strong></div>
+              <div class="file-row"><span>report.html</span><strong>readable</strong></div>
+              <div class="file-row"><span>manifest.json</span><strong>indexed</strong></div>
+              <div class="file-row"><span>checksums.sha256</span><strong>checked</strong></div>
             </div>
-            <div class="install-command">
-              <code>brew install --cask azohra/tools/gopro-yank</code>
-              <button type="button" data-copy="brew install --cask azohra/tools/gopro-yank" aria-label="Copy Homebrew install command">Copy</button>
-            </div>
-            <p class="picker-note">Homebrew handles the right Mac version automatically.</p>
+            <div class="verified-stamp"><span>●</span> Archive verified</div>
           </div>
-
-          <div class="platform-panel" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows" data-platform-panel="windows" hidden>
-            <p class="platform-prompt">Choose your PC</p>
-            <div class="download-actions">
-              <a class="button primary" href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_amd64.zip">64-bit</a>
-              <a class="button secondary" href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_windows_arm64.zip">ARM</a>
-            </div>
-            <p class="picker-note">Unzip the download, then open <code>gopro-yank.exe</code>.</p>
-          </div>
-
-          <div class="platform-panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux" data-platform-panel="linux" hidden>
-            <p class="platform-prompt">Choose your computer</p>
-            <div class="download-actions">
-              <a class="button primary" href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_amd64.tar.gz">x86-64</a>
-              <a class="button secondary" href="https://github.com/azohra/gopro-yank/releases/latest/download/gopro-yank_linux_arm64.tar.gz">ARM64</a>
-            </div>
-            <p class="picker-note">Extract the archive, then run <code>gopro-yank</code>.</p>
-          </div>
-
-          <p class="release-note">Each package contains one executable and the MIT license. No developer tools required.</p>
+          <p class="route-caption">To any folder or external drive</p>
         </div>
       </section>
 
