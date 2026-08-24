@@ -1,0 +1,13 @@
+// https://developers.cloudflare.com/workers/wrangler/configuration/
+{
+  "name": "gopro-yank-azohra-com",
+  "account_id": "075fc545fdb23bfb095addc959d84052",
+  "compatibility_date": "2026-08-23",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "gopro-yank.azohra.com", "custom_domain": true }],
+  "assets": {
+    "directory": "site",
+    "not_found_handling": "404-page"
+  }
+}
