@@ -2,8 +2,7 @@ name: Check
 
 on:
   push:
-    branches:
-      - "**"
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -11,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: check-${{ github.workflow }}-${{ github.ref }}
+  group: check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
