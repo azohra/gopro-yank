@@ -19,11 +19,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: go.mod
-          cache: true
-      - run: make check
+      - uses: jdx/mise-action@v4
+      # `mise run check` is this repo's definition of green, and CI proves the
+      # same thing a workstation does. Running `make check` here instead would
+      # let the verb and the gate drift apart silently.
+      - run: mise run check
+      # A downloadable dev build per commit. Not part of green — release.yml
+      # owns real releases, on tags — but useful and free on a public repo.
       - run: ./scripts/build-release.sh dev
       - uses: actions/upload-artifact@v7
         with:
