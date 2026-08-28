@@ -26,6 +26,11 @@ CONTRACT
 description = "The Makefile's battery: format, vet, race tests, build"
 run = "make check build"
 
+[tasks."build:release"]
+description = "Cross-platform release binaries into release/ (version, or dev)"
+raw_args = true
+run = "./scripts/build-release.sh"
+
 [tasks.deploy]
 description = "Deploy the site at the tip of main"
 confirm = "Deploy gopro-yank.azohra.com to production?"
