@@ -31,12 +31,17 @@ commands support old scripts; they are not a second product surface.
 
 - Library inspection does not write or download.
 - Downloads require confirmation; cloud media is never deleted.
-- Local deletion preserves unrelated files and the selected archive folder.
-- Credentials remain local and absent from logs and archive output.
+- Local deletion validates every manifest path before removing anything. It
+  preserves unrelated files and the selected archive folder.
+- Credentials remain local. Credential files use mode `0600`, and secret values
+  stay out of logs, fixtures, archive output, and commits.
 - Completion covers downloadable originals; unavailable media remains visible.
 
-Use `t.TempDir()` for filesystem tests and `httptest.Server` for network tests.
-Test failure paths when a partial operation could affect user data.
+Route archive-relative paths through `secureJoin`, and use `atomicWrite` for
+archive records and credentials. Extend the safety tests whenever filesystem
+behavior changes. Use `t.TempDir()` for filesystem tests and `httptest.Server`
+for network tests. Test failure paths when a partial operation could affect user
+data.
 
 ## Validation
 
@@ -48,10 +53,11 @@ make snapshot
 make release VERSION=1.2.3
 ```
 
-`make check` is required. Run `make snapshot` when packaging, dependencies,
-platforms, or source-archive contents change. It builds release artifacts
-without publishing them. Review website changes locally at desktop and phone
-widths.
+`make check` is required. `make snapshot` builds release artifacts without
+publishing them; run it when packaging, dependencies, or platforms change. If
+the source package's top-level contents change, update the `git archive`
+allowlist in `scripts/build-release.sh`. Review website changes locally at
+desktop and phone widths.
 
 Keep the README consumer-focused and update `docs/brand.md` only for shared
 voice or visual rules. CI and publishing behavior belong in
