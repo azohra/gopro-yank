@@ -60,5 +60,5 @@ allowlist in `scripts/build-release.sh`. Review website changes locally at
 desktop and phone widths.
 
 Keep the README consumer-focused and update `docs/brand.md` only for shared
-voice or visual rules. CI and publishing behavior belong in
-[`.github/workflows/`](.github/workflows/), which is the source of truth.
+voice or visual rules. `mise.toml` owns executable CI and publishing behavior.
+Workflows own triggers, permissions, credentials, and runners.

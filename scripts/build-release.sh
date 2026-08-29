@@ -2,6 +2,9 @@
 set -eu
 
 release_version=${1:-dev}
+case "$release_version" in
+v[0-9]*) release_version=${release_version#v} ;;
+esac
 project_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 output_dir="$project_root/release"
 build_dir=$(mktemp -d "${TMPDIR:-/tmp}/gopro-yank-release.XXXXXX")

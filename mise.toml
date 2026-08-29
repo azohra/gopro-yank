@@ -27,9 +27,38 @@ description = "The Makefile's battery: format, vet, race tests, build"
 run = "make check build"
 
 [tasks."build:release"]
-description = "Cross-platform release binaries into release/ (version, or dev)"
+description = "Cross-platform release binaries into release/ (version, tag, or dev)"
 raw_args = true
 run = "./scripts/build-release.sh"
+
+[tasks."release:publish"]
+description = "Publish the built assets for a tag at HEAD"
+usage = 'arg "<tag>" help="The release tag, e.g. v1.2.3"'
+run = """
+#!/usr/bin/env bash
+set -euo pipefail
+tag="${usage_tag:?release:publish: a release tag is required}"
+refuse() { echo "release:publish: refusing — $*" >&2; exit 1; }
+[[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || refuse "$tag is not a release tag"
+command -v gh >/dev/null 2>&1 || refuse "GitHub CLI is unavailable"
+gh auth status >/dev/null 2>&1 || refuse "GitHub authentication is unavailable"
+[ -z "$(git status --porcelain)" ] || refuse "tree is dirty"
+[ "$(gh repo view --json nameWithOwner --jq .nameWithOwner)" = "azohra/gopro-yank" ] || refuse "the repository is not azohra/gopro-yank"
+git fetch -q origin "refs/tags/$tag"
+[ "$(git rev-parse HEAD)" = "$(git rev-parse 'FETCH_HEAD^{commit}')" ] || refuse "$tag does not point at HEAD"
+version=${tag#v}
+expected_version=$(printf 'version "%s"' "$version")
+[ -f release/gopro-yank.rb ] && grep -Fq "$expected_version" release/gopro-yank.rb || refuse "release assets were not built for $tag"
+(cd release && shasum -a 256 -c checksums.txt)
+shopt -s nullglob
+assets=(release/*)
+[ -n "${assets[0]-}" ] || refuse "release contains no assets"
+if gh release view "$tag" >/dev/null 2>&1; then
+  gh release upload "$tag" "${assets[@]}" --clobber
+else
+  gh release create "$tag" "${assets[@]}" --generate-notes --title "GoPro Yank $tag" --verify-tag
+fi
+"""
 
 [tasks.deploy]
 description = "Deploy the site at the tip of main"
