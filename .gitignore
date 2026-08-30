@@ -35,7 +35,8 @@ __pycache__/
 Thumbs.db
 
 # mise
-mise.local.toml
+/mise.local.toml
+/mise.local.lock
 
 # cloudflare
 .wrangler/
