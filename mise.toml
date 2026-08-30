@@ -1,10 +1,6 @@
 # The Makefile keeps the Go recipes; these verbs are the fleet-invariant
 # contract over it.
 
-[tool_config]
-# Tools must resolve from the committed mise.lock (version + checksum + url).
-locked = true
-
 [tools]
 wrangler = "4.126.0"
 go = "1.25"
