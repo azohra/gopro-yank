@@ -15,6 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4
+      - id: go_cache
+        run: |
+          echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+          echo "modules=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ${{ steps.go_cache.outputs.build }}
+            ${{ steps.go_cache.outputs.modules }}
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-
       - run: mise run check
       - name: Build release
         run: mise run build:release "$GITHUB_REF_NAME"
