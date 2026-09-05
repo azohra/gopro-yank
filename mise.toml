@@ -3,9 +3,9 @@
 
 [tools]
 wrangler = "4.129.0"
-go = "1.25"
+go = "1.27.1"
 node = "24"
-make = "4.3"
+make = "4.4.1"
 
 # What this repository needs in its environment, and which of those
 # disclosure would compromise. Read it; do not restate it.
