@@ -71,6 +71,7 @@ download names and archive layout are the installer and Homebrew contract.
 
 Create the release tag on a tested main commit, then run the Release workflow
 on main with that tag. Tag pushes do not publish. The workflow rejects tags outside
-main and always builds the resolved commit. Publication uploads into a draft;
-re-running the same tag resumes an incomplete draft. Published assets are never
-replaced. Homebrew's scheduled updater proposes the cask change after publication.
+main and always builds the resolved commit before calling `mise run release`.
+Publication uploads into a draft; re-running the same tag resumes an incomplete
+draft. Published assets are never replaced. Homebrew's scheduled updater proposes
+the cask change after publication.

@@ -28,14 +28,14 @@ description = "Cross-platform release binaries into release/ (version, tag, or d
 raw_args = true
 run = "./scripts/build-release.sh"
 
-[tasks."release:publish"]
+[tasks.release]
 description = "Publish the built assets for a tag at HEAD"
 usage = 'arg "<tag>" help="The release tag, e.g. v1.2.3"'
 run = """
 #!/usr/bin/env bash
 set -euo pipefail
-tag="${usage_tag:?release:publish: a release tag is required}"
-refuse() { echo "release:publish: refusing — $*" >&2; exit 1; }
+tag="${usage_tag:?release: a release tag is required}"
+refuse() { echo "release: refusing — $*" >&2; exit 1; }
 [[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || refuse "$tag is not a release tag"
 [ "$(bash scripts/release-source.sh "$tag")" = "$(git rev-parse HEAD)" ] || refuse "release source is not HEAD"
 command -v gh >/dev/null 2>&1 || refuse "GitHub CLI is unavailable"
@@ -66,10 +66,17 @@ else
   gh release create "$tag" --draft --generate-notes --title "GoPro Yank $tag" --verify-tag
 fi
 gh release upload "$tag" "${assets[@]}" --clobber
-published_assets=$(gh release view "$tag" --json assets --jq '.assets[].name') || refuse "could not read uploaded assets"
+verification_dir=$(mktemp -d)
+trap 'rm -rf "$verification_dir"' EXIT
+gh release download "$tag" --dir "$verification_dir" || refuse "could not download uploaded assets"
+for uploaded_asset in "$verification_dir"/*; do
+  [ -f "release/${uploaded_asset##*/}" ] || refuse "draft contains unexpected asset ${uploaded_asset##*/}"
+done
 for asset in "${assets[@]}"; do
   asset_name=${asset##*/}
-  grep -Fxq "$asset_name" <<<"$published_assets" || refuse "release is missing uploaded asset $asset_name"
+  downloaded_asset="$verification_dir/$asset_name"
+  [ -f "$downloaded_asset" ] || refuse "release is missing uploaded asset $asset_name"
+  cmp -s "$asset" "$downloaded_asset" || refuse "uploaded asset $asset_name does not match the built release"
 done
 gh release edit "$tag" --draft=false
 published_state=$(gh release view "$tag" --json isDraft --jq .isDraft) || refuse "could not verify published release"

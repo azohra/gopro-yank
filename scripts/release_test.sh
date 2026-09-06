@@ -40,8 +40,14 @@ case "$*" in
     ;;
   "release create v1.2.3"*) : >"$GH_STATE"; exit 0 ;;
   "release upload v1.2.3"*) exit 0 ;;
-  "release view v1.2.3 --json assets --jq .assets[].name")
-    if [[ ${GH_SCENARIO:?} == partial ]]; then printf '%s\n' gopro-yank.rb; else printf '%s\n' gopro-yank.rb gopro-yank-linux-amd64.tar.gz checksums.txt; fi
+  "release download v1.2.3 --dir "*)
+    download_dir=${*: -1}
+    for asset in "${GH_FIXTURE:?}"/release/*; do
+      if [[ ${GH_SCENARIO:?} == missing && ${asset##*/} == gopro-yank-linux-amd64.tar.gz ]]; then continue; fi
+      cp "$asset" "$download_dir/"
+    done
+    if [[ ${GH_SCENARIO:?} == extra ]]; then printf "obsolete\n" >"$download_dir/obsolete.zip"; fi
+    if [[ ${GH_SCENARIO:?} == corrupt ]]; then printf 'corrupt\n' >"$download_dir/gopro-yank-linux-amd64.tar.gz"; fi
     exit 0
     ;;
   "release edit v1.2.3 --draft=false") : >"$GH_STATE"; exit 0 ;;
@@ -53,19 +59,19 @@ GH
   printf '%s\n' "$fixture"
 }
 
-run_publish() {
+run_release() {
   local fixture=$1 scenario=$2
-  GH_LOG="${fixture}-gh.log" GH_STATE="${fixture}-state" GH_SCENARIO="$scenario" PATH="$test_root/${scenario}-bin:$PATH" \
-    mise --cd "$fixture" run release:publish v1.2.3
+  GH_LOG="${fixture}-gh.log" GH_STATE="${fixture}-state" GH_SCENARIO="$scenario" GH_FIXTURE="$fixture" PATH="$test_root/${scenario}-bin:$PATH" \
+    mise --cd "$fixture" run release v1.2.3
 }
 
 new_release=$(make_fixture new)
-run_publish "$new_release" new >/dev/null 2>&1
+run_release "$new_release" new >/dev/null 2>&1
 grep -Eq '^release create v1.2.3 --draft ' "$new_release-gh.log"
 grep -Eq '^release edit v1.2.3 --draft=false' "$new_release-gh.log"
 
 existing_release=$(make_fixture existing)
-run_publish "$existing_release" existing >/dev/null 2>&1
+run_release "$existing_release" existing >/dev/null 2>&1
 if grep -Eq '^release create v1.2.3' "$existing_release-gh.log"; then
   echo 'existing draft was recreated' >&2
   exit 1
@@ -74,7 +80,7 @@ grep -Eq '^release upload v1.2.3' "$existing_release-gh.log"
 grep -Eq '^release edit v1.2.3 --draft=false' "$existing_release-gh.log"
 
 lookup_failure=$(make_fixture auth-failure)
-if run_publish "$lookup_failure" auth-failure >"$lookup_failure-output" 2>&1; then
+if run_release "$lookup_failure" auth-failure >"$lookup_failure-output" 2>&1; then
   echo 'release lookup failure unexpectedly succeeded' >&2
   exit 1
 fi
@@ -85,7 +91,7 @@ if grep -Eq '^release create v1.2.3' "$lookup_failure-gh.log"; then
 fi
 
 published=$(make_fixture published)
-if run_publish "$published" published >/dev/null 2>&1; then
+if run_release "$published" published >/dev/null 2>&1; then
   echo 'published release unexpectedly succeeded' >&2
   exit 1
 fi
@@ -94,16 +100,37 @@ if grep -Eq 'release (upload|create|edit)' "$published-gh.log"; then
   exit 1
 fi
 
-partial=$(make_fixture partial)
-if run_publish "$partial" partial >/dev/null 2>&1; then
-  echo 'partial upload unexpectedly succeeded' >&2
+missing=$(make_fixture missing)
+if run_release "$missing" missing >"$missing-output" 2>&1; then
+  echo 'missing upload unexpectedly succeeded' >&2
   exit 1
 fi
-grep -Eq '^release create v1.2.3 --draft ' "$partial-gh.log"
-grep -Eq '^release upload v1.2.3' "$partial-gh.log"
-if grep -Eq '^release edit v1.2.3 --draft=false' "$partial-gh.log"; then
-  echo 'partial upload published the draft' >&2
+grep -Fq 'release is missing uploaded asset gopro-yank-linux-amd64.tar.gz' "$missing-output"
+if grep -Eq '^release edit v1.2.3 --draft=false' "$missing-gh.log"; then
+  echo 'missing upload published the draft' >&2
   exit 1
 fi
 
-echo 'release publish contract tests passed'
+corrupt=$(make_fixture corrupt)
+if run_release "$corrupt" corrupt >"$corrupt-output" 2>&1; then
+  echo 'corrupt upload unexpectedly succeeded' >&2
+  exit 1
+fi
+grep -Fq 'uploaded asset gopro-yank-linux-amd64.tar.gz does not match the built release' "$corrupt-output"
+if grep -Eq '^release edit v1.2.3 --draft=false' "$corrupt-gh.log"; then
+  echo 'corrupt upload published the draft' >&2
+  exit 1
+fi
+
+extra=$(make_fixture extra)
+if run_release "$extra" extra >"$extra-output" 2>&1; then
+  echo 'unexpected draft asset was published' >&2
+  exit 1
+fi
+grep -Fq 'draft contains unexpected asset obsolete.zip' "$extra-output"
+if grep -Eq '^release edit v1.2.3 --draft=false' "$extra-gh.log"; then
+  echo 'unexpected draft asset published the draft' >&2
+  exit 1
+fi
+
+echo 'release contract tests passed'
