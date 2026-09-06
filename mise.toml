@@ -49,11 +49,29 @@ expected_version=$(printf 'version "%s"' "$version")
 shopt -s nullglob
 assets=(release/*)
 [ -n "${assets[0]-}" ] || refuse "release contains no assets"
-if gh release view "$tag" >/dev/null 2>&1; then
-  gh release upload "$tag" "${assets[@]}" --clobber
+existing_draft=""
+release_view_error=$(mktemp)
+if existing_draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>"$release_view_error"); then
+  rm -f "$release_view_error"
+  [ "$existing_draft" = "true" ] || refuse "release $tag is already published"
 else
-  gh release create "$tag" "${assets[@]}" --generate-notes --title "GoPro Yank $tag" --verify-tag
+  if ! grep -Eiq 'not found|HTTP 404|status 404' "$release_view_error"; then
+    detail=$(tr '\n' ' ' <"$release_view_error")
+    rm -f "$release_view_error"
+    refuse "could not inspect release $tag${detail:+: $detail}"
+  fi
+  rm -f "$release_view_error"
+  gh release create "$tag" --draft --generate-notes --title "GoPro Yank $tag" --verify-tag
 fi
+gh release upload "$tag" "${assets[@]}" --clobber
+published_assets=$(gh release view "$tag" --json assets --jq '.assets[].name') || refuse "could not read uploaded assets"
+for asset in "${assets[@]}"; do
+  asset_name=${asset##*/}
+  grep -Fxq "$asset_name" <<<"$published_assets" || refuse "release is missing uploaded asset $asset_name"
+done
+gh release edit "$tag" --draft=false
+published_state=$(gh release view "$tag" --json isDraft --jq .isDraft) || refuse "could not verify published release"
+[ "$published_state" = "false" ] || refuse "release $tag is still a draft"
 """
 
 [tasks.deploy]
