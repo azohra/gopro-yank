@@ -80,4 +80,4 @@ jobs:
       - name: Publish assets
         env:
           GH_TOKEN: ${{ steps.bosun.outputs.token }}
-        run: mise run release:publish "$RELEASE_TAG"
+        run: mise run release "$RELEASE_TAG"
