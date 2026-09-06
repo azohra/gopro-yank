@@ -62,3 +62,15 @@ desktop and phone widths.
 Keep the README consumer-focused and update `docs/brand.md` only for shared
 voice or visual rules. `mise.toml` owns executable CI and publishing behavior.
 Workflows own triggers, permissions, credentials, and runners.
+
+## Publishing a release
+
+`mise run build:release -- v1.2.3` uses GoReleaser to build the six platform
+archives, then adds the source archive, Homebrew cask, and checksums. The existing
+download names and archive layout are the installer and Homebrew contract.
+
+Create the release tag on a tested main commit, then run the Release workflow
+on main with that tag. Tag pushes do not publish. The workflow rejects tags outside
+main and always builds the resolved commit. Publication uploads into a draft;
+re-running the same tag resumes an incomplete draft. Published assets are never
+replaced. Homebrew's scheduled updater proposes the cask change after publication.

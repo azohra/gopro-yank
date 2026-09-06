@@ -7,7 +7,8 @@ trap 'rm -rf "$test_root"' EXIT
 
 make_fixture() {
   local fixture="$test_root/$1"
-  mkdir -p "$fixture/release" "$test_root/$1-bin"
+  mkdir -p "$fixture/scripts" "$fixture/release" "$test_root/$1-bin"
+  cp "$repo_root/scripts/release-source.sh" "$fixture/scripts/"
   cp "$repo_root/mise.toml" "$fixture/mise.toml"
   printf 'version "%s"\n' '1.2.3' >"$fixture/release/gopro-yank.rb"
   printf 'asset\n' >"$fixture/release/gopro-yank-linux-amd64.tar.gz"
@@ -15,7 +16,7 @@ make_fixture() {
   git -C "$fixture" init -q -b main
   git -C "$fixture" config user.email test@example.invalid
   git -C "$fixture" config user.name test
-  git -C "$fixture" add mise.toml release
+  git -C "$fixture" add mise.toml release scripts
   git -C "$fixture" commit -q -m fixture
   git -C "$fixture" tag v1.2.3
   git -C "$fixture" clone -q --bare . "$test_root/$1-origin.git"

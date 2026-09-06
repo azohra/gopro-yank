@@ -4,6 +4,7 @@
 [tools]
 wrangler = "4.129.0"
 go = "1.27.1"
+goreleaser = "2.18.0"
 node = "24"
 make = "4.4.1"
 
@@ -20,7 +21,7 @@ CONTRACT
 
 [tasks.check]
 description = "The Makefile's battery: format, vet, race tests, build"
-run = "make check build"
+run = "bash scripts/release-source_test.sh && make check build && goreleaser check"
 
 [tasks."build:release"]
 description = "Cross-platform release binaries into release/ (version, tag, or dev)"
@@ -36,6 +37,7 @@ set -euo pipefail
 tag="${usage_tag:?release:publish: a release tag is required}"
 refuse() { echo "release:publish: refusing — $*" >&2; exit 1; }
 [[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || refuse "$tag is not a release tag"
+[ "$(bash scripts/release-source.sh "$tag")" = "$(git rev-parse HEAD)" ] || refuse "release source is not HEAD"
 command -v gh >/dev/null 2>&1 || refuse "GitHub CLI is unavailable"
 gh auth status >/dev/null 2>&1 || refuse "GitHub authentication is unavailable"
 [ -z "$(git status --porcelain)" ] || refuse "tree is dirty"
@@ -93,3 +95,8 @@ if [ "${usage_dry_run:-false}" = "true" ]; then
 fi
 wrangler deploy --tag "$(git rev-parse --short HEAD)" --message "$(git log -1 --pretty=%s)"
 """
+
+[tasks."release:source"]
+description = "Resolve a release tag to its reviewed main commit"
+usage = 'arg "<tag>"'
+run = 'bash scripts/release-source.sh "$usage_tag"'
