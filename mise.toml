@@ -4,7 +4,7 @@
 [tools]
 wrangler = "4.129.0"
 go = "1.27.1"
-goreleaser = "2.18.0"
+"aqua:orhun/git-cliff" = "2.14.1"
 node = "24"
 make = "4.4.1"
 
@@ -21,67 +21,35 @@ CONTRACT
 
 [tasks.check]
 description = "The Makefile's battery: format, vet, race tests, build"
-run = "bash scripts/release-source_test.sh && make check build && goreleaser check"
+run = "make check build"
 
-[tasks."build:release"]
-description = "Cross-platform release binaries into release/ (version, tag, or dev)"
-raw_args = true
-run = "./scripts/build-release.sh"
+[tasks.changelog]
+description = "Render released and unreleased changes with PR links"
+run = "git cliff"
+
+[tasks."build:dist"]
+description = "Build six platform archives, source, Homebrew cask, and checksums"
+run = "./scripts/build-dist.sh"
 
 [tasks.release]
-description = "Publish the built assets for a tag at HEAD"
-usage = 'arg "<tag>" help="The release tag, e.g. v1.2.3"'
-run = """
+description = "Build and publish a release from current main"
+tools = { gh = "2.100.0" }
+run = '''
 #!/usr/bin/env bash
 set -euo pipefail
-tag="${usage_tag:?release: a release tag is required}"
-refuse() { echo "release: refusing — $*" >&2; exit 1; }
-[[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || refuse "$tag is not a release tag"
-[ "$(bash scripts/release-source.sh "$tag")" = "$(git rev-parse HEAD)" ] || refuse "release source is not HEAD"
-command -v gh >/dev/null 2>&1 || refuse "GitHub CLI is unavailable"
-gh auth status >/dev/null 2>&1 || refuse "GitHub authentication is unavailable"
-[ -z "$(git status --porcelain)" ] || refuse "tree is dirty"
-[ "$(gh repo view --json nameWithOwner --jq .nameWithOwner)" = "azohra/gopro-yank" ] || refuse "the repository is not azohra/gopro-yank"
-git fetch -q origin "refs/tags/$tag"
-[ "$(git rev-parse HEAD)" = "$(git rev-parse 'FETCH_HEAD^{commit}')" ] || refuse "$tag does not point at HEAD"
-version=${tag#v}
-expected_version=$(printf 'version "%s"' "$version")
-[ -f release/gopro-yank.rb ] && grep -Fq "$expected_version" release/gopro-yank.rb || refuse "release assets were not built for $tag"
-(cd release && shasum -a 256 -c checksums.txt)
-shopt -s nullglob
-assets=(release/*)
-[ -n "${assets[0]-}" ] || refuse "release contains no assets"
-existing_draft=""
-release_view_error=$(mktemp)
-if existing_draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>"$release_view_error"); then
-  rm -f "$release_view_error"
-  [ "$existing_draft" = "true" ] || refuse "release $tag is already published"
-else
-  if ! grep -Eiq 'not found|HTTP 404|status 404' "$release_view_error"; then
-    detail=$(tr '\n' ' ' <"$release_view_error")
-    rm -f "$release_view_error"
-    refuse "could not inspect release $tag${detail:+: $detail}"
-  fi
-  rm -f "$release_view_error"
-  gh release create "$tag" --draft --generate-notes --title "GoPro Yank $tag" --verify-tag
-fi
-gh release upload "$tag" "${assets[@]}" --clobber
-verification_dir=$(mktemp -d)
-trap 'rm -rf "$verification_dir"' EXIT
-gh release download "$tag" --dir "$verification_dir" || refuse "could not download uploaded assets"
-for uploaded_asset in "$verification_dir"/*; do
-  [ -f "release/${uploaded_asset##*/}" ] || refuse "draft contains unexpected asset ${uploaded_asset##*/}"
-done
-for asset in "${assets[@]}"; do
-  asset_name=${asset##*/}
-  downloaded_asset="$verification_dir/$asset_name"
-  [ -f "$downloaded_asset" ] || refuse "release is missing uploaded asset $asset_name"
-  cmp -s "$asset" "$downloaded_asset" || refuse "uploaded asset $asset_name does not match the built release"
-done
-gh release edit "$tag" --draft=false
-published_state=$(gh release view "$tag" --json isDraft --jq .isDraft) || refuse "could not verify published release"
-[ "$published_state" = "false" ] || refuse "release $tag is still a draft"
-"""
+[ -z "$(git status --porcelain)" ] || { echo 'release: commit changes first' >&2; exit 1; }
+git fetch -q origin main --tags
+head=$(git rev-parse HEAD)
+[ "$head" = "$(git rev-parse origin/main)" ] || { echo 'release: check out current main first' >&2; exit 1; }
+tag=$(git cliff --offline --unreleased --bumped-version)
+[[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+$ ]]
+[ "$tag" != "$(git describe --tags --abbrev=0 --match 'v[0-9]*')" ] || { echo 'No new Conventional changes to release'; exit 0; }
+RELEASE_VERSION="${tag#v}" mise run build:dist
+git cliff --unreleased --tag "$tag" > release/notes.md
+gh release create "$tag" release/gopro-yank_*.tar.gz release/gopro-yank_*.zip release/gopro-yank.rb release/checksums.txt \
+  --repo azohra/gopro-yank --target "$head" \
+  --title "GoPro Yank $tag" --notes-file release/notes.md
+'''
 
 [tasks.deploy]
 description = "Deploy the site at the tip of main"
@@ -102,8 +70,3 @@ if [ "${usage_dry_run:-false}" = "true" ]; then
 fi
 wrangler deploy --tag "$(git rev-parse --short HEAD)" --message "$(git log -1 --pretty=%s)"
 """
-
-[tasks."release:source"]
-description = "Resolve a release tag to its reviewed main commit"
-usage = 'arg "<tag>"'
-run = 'bash scripts/release-source.sh "$usage_tag"'

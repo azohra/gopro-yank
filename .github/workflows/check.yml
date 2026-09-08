@@ -38,4 +38,4 @@ jobs:
           restore-keys: |
             go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-
       - run: mise run check
-      - run: mise run build:release dev
+      - run: mise run build:dist
