@@ -22,7 +22,7 @@ GoPro account.
 | Archive, transfer, checks, and deletion | [`archive.go`](internal/app/archive.go), [`transfer.go`](internal/app/transfer.go), [`delete.go`](internal/app/delete.go) |
 | Offline report | [`report.go`](internal/app/report.go) |
 | Static website | [`site/`](site/) |
-| Release packaging | [`build-release.sh`](scripts/build-release.sh) |
+| Release packaging | [`build-dist.sh`](scripts/build-dist.sh) |
 
 Keep behavior in shared workflows so the TUI and CLI agree. Compatibility
 commands support old scripts; they are not a second product surface.
@@ -49,14 +49,13 @@ data.
 make fmt
 make check
 make build
-make snapshot
-make release VERSION=1.2.3
+mise run build:dist
 ```
 
-`make check` is required. `make snapshot` builds release artifacts without
+`make check` is required. `mise run build:dist` builds development archives without
 publishing them; run it when packaging, dependencies, or platforms change. If
 the source package's top-level contents change, update the `git archive`
-allowlist in `scripts/build-release.sh`. Review website changes locally at
+allowlist in `scripts/build-dist.sh`. Review website changes locally at
 desktop and phone widths.
 
 Keep the README consumer-focused and update `docs/brand.md` only for shared
@@ -65,13 +64,27 @@ Workflows own triggers, permissions, credentials, and runners.
 
 ## Publishing a release
 
-`mise run build:release -- v1.2.3` uses GoReleaser to build the six platform
-archives, then adds the source archive, Homebrew cask, and checksums. The existing
-download names and archive layout are the installer and Homebrew contract.
+Run `mise run changelog` to see released and unreleased changes. Conventional
+squash commits determine the next version using git-cliff's default bump rules:
+breaking changes increment the major, features increment the minor, and other
+Conventional changes increment the patch. Non-Conventional commits are excluded.
+Notes link to the originating PR, falling back to the commit when no PR exists.
+Set `GITHUB_TOKEN` for authenticated GitHub access when rendering notes; version
+calculation remains offline.
 
-Create the release tag on a tested main commit, then run the Release workflow
-on main with that tag. Tag pushes do not publish. The workflow rejects tags outside
-main and always builds the resolved commit before calling `mise run release`.
-Publication uploads into a draft; re-running the same tag resumes an incomplete
-draft. Published assets are never replaced. Homebrew's scheduled updater proposes
-the cask change after publication.
+From a clean checkout of current main, run `mise run release`, or dispatch the
+Release workflow on main. The command calculates the version once, builds the six
+platform archives, source archive, Homebrew cask and checksums, then creates the
+tag and GitHub Release with those assets and release notes. Source versions are
+not edited. Merging a PR does not publish a release.
+
+PR checks run `mise run check` and `mise run build:dist`. Packaging uses `dev`
+unless `RELEASE_VERSION` is supplied by the release task. It does not calculate
+versions from branch commits. The source archive contains the committed source.
+The archive names and layout remain the installer and Homebrew contract.
+
+Publication does not overwrite an existing release. If an upload is interrupted,
+inspect the draft and use GitHub CLI to upload missing assets and publish it.
+Do not move a published tag. Homebrew's scheduled updater proposes the cask change
+after publication. Website deployment remains independent of releases; its
+installers download the latest published assets.

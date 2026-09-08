@@ -1,33 +1,40 @@
 #!/bin/sh
 set -eu
 
-release_version=${1:-dev}
-case "$release_version" in
-v[0-9]*) release_version=${release_version#v} ;;
-esac
+release_version=${RELEASE_VERSION:-dev}
 project_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 output_dir="$project_root/release"
-
-if ! printf '%s\n' "$release_version" | grep -Eq '^(dev|[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?)$'; then
-  echo "invalid version: $release_version" >&2
-  exit 2
-fi
-
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT HUP INT TERM
 rm -rf "$output_dir"
 mkdir -p "$output_dir"
+cd "$project_root"
 
-export RELEASE_VERSION="$release_version"
-(cd "$project_root" && goreleaser release --snapshot --skip=publish --clean)
-for archive in "$project_root"/dist/gopro-yank_*.tar.gz "$project_root"/dist/gopro-yank_*.zip; do
-  [ -f "$archive" ] && cp "$archive" "$output_dir/"
+for os in darwin linux windows; do
+  for arch in arm64 amd64; do
+    binary=gopro-yank
+    [ "$os" != windows ] || binary=gopro-yank.exe
+    dir="$scratch/${os}_${arch}"
+    mkdir -p "$dir"
+    CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -buildvcs=false \
+      -ldflags="-s -w -X main.version=$release_version" \
+      -o "$dir/$binary" ./cmd/gopro-yank
+    cp LICENSE "$dir/"
+    if [ "$os" = windows ]; then
+      (cd "$dir" && zip -q "$output_dir/gopro-yank_${os}_${arch}.zip" "$binary" LICENSE)
+    else
+      COPYFILE_DISABLE=1 tar -czf "$output_dir/gopro-yank_${os}_${arch}.tar.gz" -C "$dir" "$binary" LICENSE
+    fi
+  done
 done
+[ "$("$scratch/$(go env GOOS)_$(go env GOARCH)/gopro-yank" --version)" = "gopro-yank $release_version" ]
 
-git -C "$project_root" archive \
+git archive \
   --format=tar.gz \
   --mtime=1970-01-01T00:00:00Z \
   --prefix=gopro-yank/ \
   --output="$output_dir/gopro-yank_source.tar.gz" \
-  'HEAD^{tree}' -- .goreleaser.yaml mise.toml .env.example .github cmd docs internal scripts site CONTRIBUTING.md go.mod go.sum Makefile LICENSE README.md
+  'HEAD^{tree}' -- cliff.toml mise.toml .env.example .github cmd docs internal scripts site CONTRIBUTING.md go.mod go.sum Makefile LICENSE README.md
 
 darwin_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_amd64.tar.gz" | awk '{print $1}')
 darwin_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_arm64.tar.gz" | awk '{print $1}')
@@ -61,6 +68,6 @@ cask "gopro-yank" do
 end
 CASK
 
-(cd "$output_dir" && shasum -a 256 gopro-yank_* > checksums.txt)
+(cd "$output_dir" && shasum -a 256 gopro-yank_* gopro-yank.rb > checksums.txt)
 echo "Release artifacts: $output_dir"
 echo "Homebrew cask asset: $output_dir/gopro-yank.rb"
