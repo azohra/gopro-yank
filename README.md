@@ -95,7 +95,8 @@ use `gopro-yank login --no-browser`. Environment-based setups can start from
 Download the package for your computer from
 [Releases](https://github.com/azohra/gopro-yank/releases) and check it against
 `checksums.txt`. Each package contains one executable and the license; Python
-and Go are not required.
+and Go are not required. macOS builds require Apple Silicon; Linux and Windows
+builds support AMD64 and ARM64. Source downloads are provided by GitHub.
 
 Coming from Python v0? The first archive run can read its records from
 `~/.local/share/gopro-yank/state/`, check the existing files in place, and leave

@@ -73,8 +73,8 @@ Set `GITHUB_TOKEN` for authenticated GitHub access when rendering notes; version
 calculation remains offline.
 
 From a clean checkout of current main, run `mise run release`, or dispatch the
-Release workflow on main. The command calculates the version once, builds the six
-platform archives, source archive, Homebrew cask and checksums, then creates the
+Release workflow on main. The command calculates the version once, builds the five
+platform archives, Homebrew cask and checksums, then creates the
 tag and GitHub Release with those assets and release notes. Source versions are
 not edited. Merging a PR does not publish a release.
 
@@ -84,7 +84,7 @@ merge.
 
 PR checks run `mise run check` and `mise run build:dist`. Packaging uses `dev`
 unless `RELEASE_VERSION` is supplied by the release task. It does not calculate
-versions from branch commits. The source archive contains the committed source.
+versions from branch commits. GitHub provides source downloads for each tag.
 The archive names and layout remain the installer and Homebrew contract.
 
 Publication does not overwrite an existing release. If an upload is interrupted,

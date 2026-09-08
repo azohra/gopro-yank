@@ -12,6 +12,7 @@ cd "$project_root"
 
 for os in darwin linux windows; do
   for arch in arm64 amd64; do
+    [ "$os/$arch" != darwin/amd64 ] || continue
     binary=gopro-yank
     [ "$os" != windows ] || binary=gopro-yank.exe
     dir="$scratch/${os}_${arch}"
@@ -29,14 +30,6 @@ for os in darwin linux windows; do
 done
 [ "$("$scratch/$(go env GOOS)_$(go env GOARCH)/gopro-yank" --version)" = "gopro-yank $release_version" ]
 
-git archive \
-  --format=tar.gz \
-  --mtime=1970-01-01T00:00:00Z \
-  --prefix=gopro-yank/ \
-  --output="$output_dir/gopro-yank_source.tar.gz" \
-  'HEAD^{tree}' -- cliff.toml mise.toml .env.example .github cmd docs internal scripts site CONTRIBUTING.md go.mod go.sum Makefile LICENSE README.md
-
-darwin_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_amd64.tar.gz" | awk '{print $1}')
 darwin_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_darwin_arm64.tar.gz" | awk '{print $1}')
 linux_amd64_sha=$(shasum -a 256 "$output_dir/gopro-yank_linux_amd64.tar.gz" | awk '{print $1}')
 linux_arm64_sha=$(shasum -a 256 "$output_dir/gopro-yank_linux_arm64.tar.gz" | awk '{print $1}')
@@ -48,11 +41,12 @@ cask "gopro-yank" do
 
   version "${release_version}"
   sha256 arm:          "${darwin_arm64_sha}",
-         intel:        "${darwin_amd64_sha}",
          arm64_linux:  "${linux_arm64_sha}",
          x86_64_linux: "${linux_amd64_sha}"
 
   on_macos do
+    depends_on arch: :arm64
+
     postflight do
       system_command "/usr/bin/xattr",
                      args: ["-d", "com.apple.quarantine", "#{staged_path}/gopro-yank"]
