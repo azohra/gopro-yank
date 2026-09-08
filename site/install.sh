@@ -35,6 +35,11 @@ case $(uname -m) in
     ;;
 esac
 
+[ "$target_os/$target_arch" != darwin/amd64 ] || {
+  printf '%s\n' 'GoPro Yank requires an Apple Silicon Mac.' >&2
+  exit 1
+}
+
 asset="gopro-yank_${target_os}_${target_arch}.tar.gz"
 temporary_dir=$(mktemp -d "${TMPDIR:-/tmp}/gopro-yank-install.XXXXXX")
 
