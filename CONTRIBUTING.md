@@ -78,6 +78,10 @@ platform archives, source archive, Homebrew cask and checksums, then creates the
 tag and GitHub Release with those assets and release notes. Source versions are
 not edited. Merging a PR does not publish a release.
 
+Main requires passing PR checks against the current base before merging. The
+Check workflow runs on pull requests or manual dispatch, without repeating after
+merge.
+
 PR checks run `mise run check` and `mise run build:dist`. Packaging uses `dev`
 unless `RELEASE_VERSION` is supplied by the release task. It does not calculate
 versions from branch commits. The source archive contains the committed source.
