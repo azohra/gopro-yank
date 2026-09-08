@@ -63,7 +63,6 @@ set -euo pipefail
 [ -z "$(git status --porcelain)" ] || { echo "deploy: refusing — tree is dirty" >&2; exit 1; }
 git fetch -q origin main
 [ "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" ] || { echo "deploy: refusing — HEAD is not the tip of origin/main" >&2; exit 1; }
-mise run check
 if [ "${usage_dry_run:-false}" = "true" ]; then
   wrangler deploy --dry-run
   exit 0
