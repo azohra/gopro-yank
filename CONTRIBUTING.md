@@ -64,14 +64,18 @@ Workflows own triggers, permissions, credentials, and runners.
 
 ## Publishing a release
 
+See [Conventional PR](https://github.com/azohra/conventional-pr) for the change-record
+format and shared presentation. `mise run changelog -- --json` exports structured
+history; `mise.toml` pins the preset URL.
+
 Run `mise run changelog` to see released and unreleased changes. Conventional
 squash commits determine the next version using git-cliff. Before v1.0.0,
 breaking changes increment the minor version; from v1.0.0 onward, they increment
 the major. Features increment the minor, and other Conventional changes
 increment the patch. Non-Conventional commits are excluded.
 Notes link to the originating PR, falling back to the commit when no PR exists.
-Set `GITHUB_TOKEN` for authenticated GitHub access when rendering notes; version
-calculation remains offline.
+Set `GITHUB_TOKEN` for authenticated GitHub access when rendering notes; the shared
+preset is fetched for every invocation, including version calculation.
 
 From a clean checkout of current main, run `mise run release`, or dispatch the
 Release workflow on main. The command calculates the version once, builds the five

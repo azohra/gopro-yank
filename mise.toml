@@ -1,6 +1,13 @@
 # The Makefile keeps the Go recipes; these verbs are the fleet-invariant
 # contract over it.
 
+[vars]
+changelog_config = "https://raw.githubusercontent.com/azohra/conventional-pr/3b38025ec8de687c82bdadd36ddb56c4060eefda/cliff.toml"
+
+[env]
+# Preserve selection of version tags across all branches.
+GIT_CLIFF__GIT__USE_BRANCH_TAGS = "false"
+
 [tools]
 wrangler = "4.129.0"
 go = "1.27.1"
@@ -24,8 +31,16 @@ description = "The Makefile's battery: format, vet, race tests, build"
 run = "make check build"
 
 [tasks.changelog]
-description = "Render released and unreleased changes with PR links"
-run = "git cliff"
+description = "Render change history or export structured records"
+usage = 'flag "--json" help="Export structured Git history"'
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "${usage_json:-false}" = true ]; then
+  exec git cliff --config-url "{{vars.changelog_config}}" --context
+fi
+git cliff --config-url "{{vars.changelog_config}}"
+'''
 
 [tasks."build:dist"]
 description = "Build supported platform archives, Homebrew cask, and checksums"
@@ -41,11 +56,11 @@ set -euo pipefail
 git fetch -q origin main --tags
 head=$(git rev-parse HEAD)
 [ "$head" = "$(git rev-parse origin/main)" ] || { echo 'release: check out current main first' >&2; exit 1; }
-tag=$(git cliff --offline --unreleased --bumped-version)
+tag=$(git cliff --config-url "{{vars.changelog_config}}" --offline --unreleased --bumped-version)
 [[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+$ ]]
 [ "$tag" != "$(git describe --tags --abbrev=0 --match 'v[0-9]*')" ] || { echo 'No new Conventional changes to release'; exit 0; }
 RELEASE_VERSION="${tag#v}" mise run build:dist
-git cliff --unreleased --tag "$tag" > release/notes.md
+git cliff --config-url "{{vars.changelog_config}}" --unreleased --tag "$tag" > release/notes.md
 gh release create "$tag" release/gopro-yank_*.tar.gz release/gopro-yank_*.zip release/gopro-yank.rb release/checksums.txt \
   --repo azohra/gopro-yank --target "$head" \
   --title "GoPro Yank $tag" --notes-file release/notes.md
