@@ -1,5 +1,21 @@
-# The Makefile keeps the Go recipes; these verbs are the fleet-invariant
-# contract over it.
+# The Go module stays at the root; the static website is a separate project.
+monorepo_root = true
+min_version = "2026.9.5"
+
+[settings]
+experimental = true
+
+[monorepo]
+config_roots = ["site"]
+
+[monorepo.projects."custom:app"]
+root = "."
+
+[monorepo.projects."custom:site"]
+root = "site"
+
+[task_config]
+global_inputs = ["mise.toml", "go.mod", "go.sum", "LICENSE"]
 
 [vars]
 changelog_config = "https://raw.githubusercontent.com/azohra/conventional-pr/main/cliff.toml"
@@ -65,22 +81,3 @@ gh release create "$tag" release/gopro-yank_*.tar.gz release/gopro-yank_*.zip re
   --repo azohra/gopro-yank --target "$head" \
   --title "GoPro Yank $tag" --notes-file release/notes.md
 '''
-
-[tasks.deploy]
-description = "Deploy the site at the tip of main"
-confirm = "Deploy gopro-yank.azohra.com to production?"
-timeout = "5m"
-usage = 'flag "--dry-run" help="Validate without shipping"'
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-[ -n "${CLOUDFLARE_API_TOKEN:-}" ] || { echo "deploy: refusing — CLOUDFLARE_API_TOKEN is unset" >&2; exit 1; }
-[ -z "$(git status --porcelain)" ] || { echo "deploy: refusing — tree is dirty" >&2; exit 1; }
-git fetch -q origin main
-[ "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" ] || { echo "deploy: refusing — HEAD is not the tip of origin/main" >&2; exit 1; }
-if [ "${usage_dry_run:-false}" = "true" ]; then
-  wrangler deploy --dry-run
-  exit 0
-fi
-wrangler deploy --tag "$(git rev-parse --short HEAD)" --message "$(git log -1 --pretty=%s)"
-"""

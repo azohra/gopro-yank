@@ -1,4 +1,4 @@
-package app
+package site
 
 import (
 	"archive/tar"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestStaticSiteIsSelfContained(t *testing.T) {
-	site := filepath.Join("..", "..", "site")
+	site := filepath.Join("..")
 	payload, err := os.ReadFile(filepath.Join(site, "index.html"))
 	if err != nil {
 		t.Fatal(err)
@@ -130,7 +130,7 @@ func TestUnixInstallerVerifiesAndInstallsRelease(t *testing.T) {
 	}
 
 	installDir := filepath.Join(t.TempDir(), "bin")
-	installer := filepath.Join("..", "..", "site", "install.sh")
+	installer := filepath.Join("..", "install.sh")
 	command := exec.Command("sh", installer)
 	command.Env = append(os.Environ(),
 		"GOPRO_YANK_RELEASE_URL=file://"+release,

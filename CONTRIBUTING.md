@@ -4,7 +4,7 @@ Use the Go version declared in [`go.mod`](go.mod). The program does not require
 Python, Node.js, or CGO.
 
 ```sh
-make check
+mise run '//...:check'
 go run ./cmd/gopro-yank --demo
 ```
 
@@ -47,15 +47,18 @@ data.
 
 ```sh
 make fmt
-make check
-make build
-mise run build:dist
+mise run '//...:check'
+mise run //:build:dist
 ```
 
-`make check` is required. `mise run build:dist` builds development archives without
-publishing them; run it when packaging, dependencies, or platforms change. If
-the source package's top-level contents change, update the `git archive`
-allowlist in `scripts/build-dist.sh`. Review website changes locally at
+Mise owns two projects: the Go application at the root and the static website
+in `site/`. To check only affected projects, run
+`mise run --affected --affected-base origin/main '//...:check'`. Add
+`--affected-explain --dry-run` to inspect the selection. Shared tool and module
+inputs are declared in the root mise configuration.
+
+`mise run //:build:dist` builds development archives without
+publishing them; run it when packaging, dependencies, or platforms change. Review website changes locally at
 desktop and phone widths.
 
 Keep the README consumer-focused and update `docs/brand.md` only for shared
@@ -87,7 +90,8 @@ Main requires passing PR checks against the current base before merging. The
 Check workflow runs on pull requests or manual dispatch, without repeating after
 merge.
 
-PR checks run `mise run check` and `mise run build:dist`. Packaging uses `dev`
+PR checks use mise affected selection for project checks and application
+packaging. Website-only changes do not build application archives. Packaging uses `dev`
 unless `RELEASE_VERSION` is supplied by the release task. It does not calculate
 versions from branch commits. GitHub provides source downloads for each tag.
 The archive names and layout remain the installer and Homebrew contract.

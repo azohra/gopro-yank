@@ -24,7 +24,7 @@ jobs:
         env:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         with:
-          minimum_release_age: 24h
+          version: 2026.9.5
       - id: go_cache
         run: |
           echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
