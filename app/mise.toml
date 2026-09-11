@@ -1,0 +1,65 @@
+[vars]
+changelog_config = "https://raw.githubusercontent.com/azohra/conventional-pr/main/cliff.toml"
+
+[env]
+# Preserve selection of version tags across all branches.
+GIT_CLIFF__GIT__USE_BRANCH_TAGS = "false"
+
+[tools]
+go = "1.27.1"
+"aqua:orhun/git-cliff" = "2.14.1"
+
+[tasks.dev]
+description = "Run the offline application demo"
+run = "go run ./cmd/gopro-yank --demo"
+
+[tasks.format]
+run = "gofmt -w cmd internal"
+
+[tasks.build]
+run = "go build -trimpath -o gopro-yank ./cmd/gopro-yank"
+
+[tasks.check]
+depends = ["build"]
+description = "Check formatting, vet, race tests and compilation"
+run = """
+[ -z "$(gofmt -l cmd internal)" ] || { echo 'Run mise run //app:format' >&2; exit 1; }
+go vet ./...
+go test -race ./...
+"""
+
+[tasks.changelog]
+description = "Render change history or export structured records"
+usage = 'flag "--json" help="Export structured Git history"'
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [ "${usage_json:-false}" = true ]; then
+  exec git cliff --config-url "{{vars.changelog_config}}" --context
+fi
+git cliff --config-url "{{vars.changelog_config}}"
+'''
+
+[tasks."build:dist"]
+description = "Build supported platform archives, Homebrew cask, and checksums"
+run = "./scripts/build-dist.sh"
+
+[tasks.release]
+description = "Build and publish a release from current main"
+tools = { gh = "2.100.0" }
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+[ -z "$(git status --porcelain)" ] || { echo 'release: commit changes first' >&2; exit 1; }
+git fetch -q origin main --tags
+head=$(git rev-parse HEAD)
+[ "$head" = "$(git rev-parse origin/main)" ] || { echo 'release: check out current main first' >&2; exit 1; }
+tag=$(git cliff --config-url "{{vars.changelog_config}}" --offline --unreleased --bumped-version)
+[[ "$tag" =~ ^v[0-9]+[.][0-9]+[.][0-9]+$ ]]
+[ "$tag" != "$(git describe --tags --abbrev=0 --match 'v[0-9]*')" ] || { echo 'No new Conventional changes to release'; exit 0; }
+RELEASE_VERSION="${tag#v}" mise run //app:build:dist
+git cliff --config-url "{{vars.changelog_config}}" --unreleased --tag "$tag" > release/notes.md
+gh release create "$tag" release/gopro-yank_*.tar.gz release/gopro-yank_*.zip release/gopro-yank.rb release/checksums.txt \
+  --repo azohra/gopro-yank --target "$head" \
+  --title "GoPro Yank $tag" --notes-file release/notes.md
+'''

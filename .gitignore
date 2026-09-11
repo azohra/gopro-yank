@@ -1,7 +1,10 @@
 # Build output
-/gopro-yank
-/release/
-/dist/
+/app/gopro-yank
+/app/release/
+/site/dist/
+node_modules/
+/site/test-results/
+/site/playwright-report/
 
 # Local remnants from the Python version
 /.venv/
@@ -35,7 +38,7 @@ __pycache__/
 Thumbs.db
 
 # mise
-/mise.local.toml
+mise.local.toml
 mise*.lock
 
 # cloudflare

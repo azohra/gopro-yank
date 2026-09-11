@@ -4,21 +4,21 @@ const installers = {
     help: "Open Terminal, paste this command, then press Return.",
     command: 'curl -fsSL https://gopro-yank.azohra.com/install.sh | sh && "$HOME/.local/bin/gopro-yank"',
     result: "The script selects the right Mac build, verifies its checksum, installs it, and opens GoPro Yank.",
-    source: "https://github.com/azohra/gopro-yank/blob/main/site/install.sh",
+    source: "https://github.com/azohra/gopro-yank/blob/main/site/public/install.sh",
   },
   windows: {
     title: "Install on Windows",
     help: "Open PowerShell, paste this command, then press Enter.",
     command: "irm https://gopro-yank.azohra.com/install.ps1 | iex",
     result: "The script selects the right Windows build, verifies its checksum, installs it, and opens GoPro Yank.",
-    source: "https://github.com/azohra/gopro-yank/blob/main/site/install.ps1",
+    source: "https://github.com/azohra/gopro-yank/blob/main/site/public/install.ps1",
   },
   linux: {
     title: "Install on Linux",
     help: "Open a terminal, paste this command, then press Enter.",
     command: 'curl -fsSL https://gopro-yank.azohra.com/install.sh | sh && "$HOME/.local/bin/gopro-yank"',
     result: "The script selects the right Linux build, verifies its checksum, installs it, and opens GoPro Yank.",
-    source: "https://github.com/azohra/gopro-yank/blob/main/site/install.sh",
+    source: "https://github.com/azohra/gopro-yank/blob/main/site/public/install.sh",
   },
 };
 

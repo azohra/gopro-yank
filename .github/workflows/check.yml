@@ -25,17 +25,14 @@ jobs:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         with:
           version: 2026.9.5
-      - id: go_cache
-        run: |
-          echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
-          echo "modules=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
+          install: false
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: |
-            ${{ steps.go_cache.outputs.build }}
-            ${{ steps.go_cache.outputs.modules }}
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-${{ hashFiles('go.sum') }}
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/mise.toml') }}-${{ hashFiles('app/go.sum') }}
           restore-keys: |
-            go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-
+            go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/mise.toml') }}-
       - run: mise run --affected '//...:check'
-      - run: mise run --affected //:build:dist
+      - run: mise run --affected //app:build:dist

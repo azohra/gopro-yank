@@ -1,29 +1,35 @@
+[tools]
+node = "24"
+wrangler = "4.129.0"
+
+[tasks.setup]
+run = "npm ci"
+sources = ["package.json", "package-lock.json"]
+outputs = ["node_modules/.package-lock.json"]
+
+[tasks.dev]
+description = "Develop the website with Vite"
+depends = ["setup"]
+run = "npm run dev"
+
+[tasks.build]
+description = "Build the website into dist"
+depends = ["setup"]
+run = "npm run build"
+
 [tasks.check]
-description = "Check the static website"
+description = "Check the built website and installation script"
+depends = ["build"]
 run = """
-#!/usr/bin/env bash
-set -euo pipefail
-[ -z "$(gofmt -l test)" ] || { echo 'Format site/test with gofmt' >&2; exit 1; }
-sh -n install.sh
-node --check site.js
-go test -race ./test/...
+sh -n public/install.sh
+npm run test:install
+npx playwright install --with-deps chromium
+npm test
 """
 
 [tasks.deploy]
-description = "Deploy the site at the tip of main"
+description = "Build and deploy the website"
+depends = ["build"]
 confirm = "Deploy gopro-yank.azohra.com to production?"
 timeout = "5m"
-usage = 'flag "--dry-run" help="Validate without shipping"'
-run = """
-#!/usr/bin/env bash
-set -euo pipefail
-if [ "${usage_dry_run:-false}" = "true" ]; then
-  wrangler deploy --dry-run
-  exit 0
-fi
-[ -n "${CLOUDFLARE_API_TOKEN:-}" ] || { echo "deploy: refusing — CLOUDFLARE_API_TOKEN is unset" >&2; exit 1; }
-[ -z "$(git status --porcelain)" ] || { echo "deploy: refusing — tree is dirty" >&2; exit 1; }
-git fetch -q origin main
-[ "$(git rev-parse HEAD)" = "$(git rev-parse FETCH_HEAD)" ] || { echo "deploy: refusing — HEAD is not the tip of origin/main" >&2; exit 1; }
-wrangler deploy --tag "$(git rev-parse --short HEAD)" --message "$(git log -1 --pretty=%s)"
-"""
+run = "wrangler deploy"

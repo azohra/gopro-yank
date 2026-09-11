@@ -13,7 +13,7 @@ Set CursorBlink false
 Hide
 Type "export PS1='❯ '"
 Enter
-Type "export PATH=$PWD:$PATH"
+Type "export PATH=$PWD/app:$PATH"
 Enter
 Type "clear"
 Enter
