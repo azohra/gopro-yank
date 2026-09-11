@@ -3,8 +3,6 @@
 /app/release/
 /site/dist/
 node_modules/
-/site/test-results/
-/site/playwright-report/
 
 # Local remnants from the Python version
 /.venv/

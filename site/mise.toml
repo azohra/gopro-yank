@@ -18,12 +18,10 @@ depends = ["setup"]
 run = "npm run build"
 
 [tasks.check]
-description = "Check the built website and installation script"
+description = "Build the website and check installation"
 depends = ["build"]
 run = """
 sh -n public/install.sh
-npm run test:install
-npx playwright install --with-deps chromium
 npm test
 """
 

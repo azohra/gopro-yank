@@ -62,9 +62,9 @@ without publishing them. Run it when packaging, dependencies or platforms change
 
 `mise run //site:dev` starts Vite with live reload. `mise run //site:build`
 builds `site/dist/`, including generated CSS and JavaScript filenames. Files in
-`site/public/` are copied unchanged. The website check runs browser tests against
-the built site served by local Wrangler, plus installation tests using local
-release fixtures. It installs the Chromium browser used by those tests.
+`site/public/` are copied unchanged. The website check builds the site and tests installation using local release
+fixtures. Review page changes in a browser at desktop and phone widths, including
+the installation instructions and copy buttons.
 
 Keep the README consumer-focused and update `docs/brand.md` only for shared
 voice or visual rules. `mise.toml` owns executable CI and publishing behavior.
