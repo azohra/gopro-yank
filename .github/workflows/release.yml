@@ -32,7 +32,7 @@ jobs:
           version: 2026.9.5
           install: false
       - id: publish
-        run: mise run release:publish
+        run: mise run release:publish >> "$GITHUB_OUTPUT"
       - if: steps.publish.outputs.site_tag != ''
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

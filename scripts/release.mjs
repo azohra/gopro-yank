@@ -100,7 +100,7 @@ function publish() {
         gh('release', 'upload', tag, ...files, '--repo', repo, '--clobber');
         gh('release', 'edit', tag, '--repo', repo, '--draft=false', `--latest=${component === 'app'}`);
       }
-      if (component === 'site' && process.env.GITHUB_OUTPUT) writeFileSync(process.env.GITHUB_OUTPUT, `site_tag=${tag}\n`, { flag: 'a' });
+      if (component === 'site') console.log(`site_tag=${tag}`);
     }
   } finally {
     rmSync(scratch, { recursive: true, force: true });
