@@ -15,11 +15,14 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    env:
+      MISE_AFFECTED_BASE: origin/main
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref == 'release/next' && github.event.pull_request.head.sha || github.ref }}
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c
         env:
           MISE_GITHUB_TOKEN: ${{ github.token }}
@@ -34,5 +37,20 @@ jobs:
           key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/mise.toml') }}-${{ hashFiles('app/go.sum') }}
           restore-keys: |
             go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/mise.toml') }}-
-      - run: mise run --affected '//...:check'
-      - run: mise run --affected //app:build:dist
+      - if: github.head_ref != 'release/next' && github.ref_name != 'release/next'
+        run: mise run --affected '//...:check'
+      - if: github.head_ref != 'release/next' && github.ref_name != 'release/next'
+        run: mise run --affected //app:build:dist
+      - if: github.head_ref == 'release/next' || github.ref_name == 'release/next'
+        run: mise run release:build
+      - id: tree
+        if: github.head_ref == 'release/next' || github.ref_name == 'release/next'
+        run: echo "sha=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: github.head_ref == 'release/next' || github.ref_name == 'release/next'
+        with:
+          name: release-${{ steps.tree.outputs.sha }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 90
+          overwrite: true

@@ -1,8 +1,8 @@
 # Contributing
 
 The repository contains a Go application in `app/` and a Vite website in
-`site/`. Each component owns its tools and tasks through mise. The application
-does not require Node.js or CGO; the website does not require Go.
+`site/`. Each component owns its tools and tasks through mise. The Go executable does not require Node.js or CGO at runtime. Release
+coordination uses Node.js, which also supplies the website toolchain.
 
 ```sh
 mise run check
@@ -70,52 +70,67 @@ Keep the README consumer-focused and update `docs/brand.md` only for shared
 voice or visual rules. `mise.toml` owns executable CI and publishing behavior.
 Workflows own triggers, permissions, credentials, and runners.
 
-## Publishing a release
+## Releases
 
-See [Conventional PR](https://github.com/azohra/conventional-pr) for the change-record
-format and shared presentation. `mise run //app:changelog -- --json` exports structured
-history; `app/mise.toml` follows the shared preset on main.
+Application and website versions are independent. The Release workflow updates
+one `release/next` PR after changes merge to main. Git-cliff calculates each
+component's next version from its Conventional squash commits and renders the
+shared [Conventional PR](https://github.com/azohra/conventional-pr) format.
+The PR contains `VERSION` and `CHANGELOG.md` changes for components with new work.
+Merging ordinary PRs does not publish or deploy those changes.
 
-Run `mise run //app:changelog` to see application changes. Git-cliff scopes
-history to `app/` from the task’s working directory. This view starts with the
-directory move; earlier records remain in Git history and published GitHub releases.
-Conventional squash commits touching the application determine its next version;
-website-only commits do not. A mixed commit contributes its complete change
-record to the application release. Before v1.0.0,
-breaking changes increment the minor version; from v1.0.0 onward, they increment
-the major. Features increment the minor, and other Conventional changes
-increment the patch. Non-Conventional commits are excluded.
-Notes link to the originating PR, falling back to the commit when no PR exists.
-Set `GITHUB_TOKEN` for authenticated GitHub access when rendering notes; the shared
-preset is fetched for every invocation, including version calculation.
+Git-cliff scopes history to the component directory. Website-only commits do not
+bump the application; mixed commits contribute their complete record to both.
+Application history in this layout starts with the directory move; earlier
+release records remain on GitHub. Before v1, breaking changes increment the
+minor version; from v1 onward, they increment the major. Features increment the
+minor, and the shared preset uses patch bumps for other Conventional changes.
+Non-Conventional commits are excluded. Notes link to the originating PR where
+GitHub supplies that association.
 
-From a clean checkout of current main, run `mise run //app:release`, or dispatch the
-Release workflow on main. The command calculates the version once, builds the five
-platform archives, Homebrew cask and checksums, then creates the
-tag and GitHub Release with those assets and release notes. Source versions are
-not edited. Merging a PR does not publish a release.
+`mise run //app:changelog` and `mise run //site:changelog` preview history; add
+`-- --context` for JSON. The shared git-cliff preset follows main. From a clean,
+current main checkout, `mise run release:prepare` generates the same version and
+changelog changes as CI. It does not create tags or publish anything.
 
-Main requires passing PR checks against the current base before merging. The
-Check workflow runs on pull requests or manual dispatch, without repeating after
-merge.
+The release PR's Check run validates each releasing component and builds its
+final distributable. Go archives embed the proposed version, and the website
+bundle is built once. The resulting assets are retained for 90 days under the
+Git source tree's identity. Main requires the PR to be current and checks to pass.
+Refresh a stale release PR by dispatching Release on main; preparation recreates
+it from current main. Do not add source changes to the release PR.
 
-PR checks use mise affected selection for project checks and application
-packaging. Website-only changes do not build application archives. Packaging uses `dev`
-unless `RELEASE_VERSION` is supplied by the release task. It does not calculate
-versions from branch commits. GitHub provides source downloads for each tag.
-The archive names and layout remain the installer and Homebrew contract.
+Merging the release PR runs `mise run release:publish`. It requires a retained
+artifact from a successful Check run for that PR's head, with the same source
+tree as the merged commit. It publishes those exact assets without rebuilding
+or recalculating versions. Application tags use `v…` and own GitHub's Latest
+release; website tags use `site/v…` and do not take over Latest. Both tags identify
+the merged release commit. GitHub also provides source downloads.
 
-Publication does not overwrite an existing release. If an upload is interrupted,
-inspect the draft and use GitHub CLI to upload missing assets and publish it.
-Do not move a published tag. Homebrew's scheduled updater proposes the cask change
-after publication. Website deployment remains independent of releases; its
-installers download the latest published assets.
+Application assets retain the five supported platform archives, Homebrew cask
+and checksums. Homebrew's scheduled updater proposes the cask change after
+publication. Website publication deploys the released `site.tar.gz` using the
+Wrangler configuration at its tag. A website-only release does not build or
+publish application binaries.
 
-Website deployment uses mise affected selection for each push to main. Manual
-dispatch on main deploys current main regardless of which files changed. If a
-deployment fails or is superseded, dispatch it again on main.
+Publication uploads to a draft before making the release visible. Rerun a failed
+Release run to retry the same commit and version; existing published versions
+are not overwritten, and tags targeting another commit are refused. Missing or
+expired check artifacts stop publication. Refresh checks before merging an old
+release PR. A deployment failure leaves the published website available for retry.
 
-For a local deployment, run `mise run //site:deploy` with Cloudflare credentials
-in the environment. The task builds the checked-out website and passes any
-arguments to Wrangler; `mise run //site:deploy -- --dry-run` validates without
-publishing. Automatic deployments use the workflow’s checked-out revision.
+The workflow uses GitHub's built-in token. Repository settings must allow Actions
+to create pull requests. It explicitly dispatches Check and Conventional PR for
+the generated branch because token-created PRs do not trigger those workflows.
+
+## Website deployment
+
+`mise run //site:deploy -- site/v0.1.0` downloads and deploys a published website
+release without building from the checkout. Add `--dry-run` to validate the
+release without deploying it. Omit the tag to select the latest website tag
+reachable from the checkout. GitHub and Cloudflare credentials come from the
+environment.
+
+The Deploy website workflow accepts a published tag for retry or rollback.
+Draft releases cannot be deployed. Website source changes can accumulate on
+main until the release PR is merged.

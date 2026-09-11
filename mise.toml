@@ -13,8 +13,14 @@ root = "app"
 [monorepo.projects."custom:site"]
 root = "site"
 
-[task_config]
-global_inputs = ["mise.toml", "LICENSE", "README.md", "CONTRIBUTING.md", "docs/**"]
+[tools]
+"aqua:orhun/git-cliff" = "2.14.1"
+gh = "2.100.0"
+node = "24"
+
+[env]
+GIT_CLIFF_CONFIG_URL = "https://raw.githubusercontent.com/azohra/conventional-pr/main/cliff.toml"
+GIT_CLIFF__GIT__USE_BRANCH_TAGS = "false"
 
 [tasks.check]
 description = "Check the application and website"
@@ -28,3 +34,15 @@ cat <<'CONTRACT'
 secret  CLOUDFLARE_API_TOKEN
 CONTRACT
 """
+
+[tasks."release:prepare"]
+description = "Prepare component versions and changelogs for a release PR"
+run = "node scripts/release.mjs prepare"
+
+[tasks."release:build"]
+description = "Build the release PR's versioned artifacts"
+run = "node scripts/release.mjs build"
+
+[tasks."release:publish"]
+description = "Publish the merged release PR's checked artifacts"
+run = "node scripts/release.mjs publish"

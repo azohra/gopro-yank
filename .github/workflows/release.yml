@@ -1,21 +1,26 @@
 name: Release
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
+  actions: write
 
 concurrency:
   group: release
-  cancel-in-progress: false
+  queue: max
 
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -26,15 +31,37 @@ jobs:
         with:
           version: 2026.9.5
           install: false
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/mise.toml') }}-${{ hashFiles('app/go.sum') }}
-          restore-keys: |
-            go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('app/mise.toml') }}-
-      - name: Publish release
+      - id: publish
+        run: mise run release:publish
+      - if: steps.publish.outputs.site_tag != ''
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: mise run //app:release
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SITE_TAG: ${{ steps.publish.outputs.site_tag }}
+        run: mise run //site:deploy -- "$SITE_TAG"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          fetch-depth: 0
+      - run: mise run release:prepare
+      - uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1
+        id: pr
+        with:
+          branch: release/next
+          delete-branch: true
+          add-paths: |
+            app/VERSION
+            app/CHANGELOG.md
+            site/VERSION
+            site/CHANGELOG.md
+          commit-message: 'chore(release): prepare component releases'
+          title: 'chore(release): publish prepared component releases'
+          body: |
+            ## Summary
+
+            Publish the component versions and changelogs in this PR using the artifacts retained by its successful Check run. Website publication also deploys the prepared website bundle.
+      - if: steps.pr.outputs.pull-request-number != ''
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.pull-request-number }}
+        run: |
+          gh workflow run check.yml --ref release/next
+          gh workflow run conventional-pr.yml --ref release/next -f pr="$PR_NUMBER"
