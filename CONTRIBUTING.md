@@ -66,7 +66,7 @@ Workflows own triggers, permissions, credentials, and runners.
 
 See [Conventional PR](https://github.com/azohra/conventional-pr) for the change-record
 format and shared presentation. `mise run changelog -- --json` exports structured
-history; `mise.toml` pins the preset URL.
+history; `mise.toml` follows the shared preset on main.
 
 Run `mise run changelog` to see released and unreleased changes. Conventional
 squash commits determine the next version using git-cliff. Before v1.0.0,

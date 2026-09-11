@@ -2,7 +2,7 @@
 # contract over it.
 
 [vars]
-changelog_config = "https://raw.githubusercontent.com/azohra/conventional-pr/3b38025ec8de687c82bdadd36ddb56c4060eefda/cliff.toml"
+changelog_config = "https://raw.githubusercontent.com/azohra/conventional-pr/main/cliff.toml"
 
 [env]
 # Preserve selection of version tags across all branches.
