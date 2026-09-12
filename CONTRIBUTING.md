@@ -1,8 +1,8 @@
 # Contributing
 
 The repository contains a Go application in `app/` and a Vite website in
-`site/`. Each component owns its tools and tasks through mise. The Go executable does not require Node.js or CGO at runtime. Release
-coordination uses Node.js, which also supplies the website toolchain.
+`site/`. Each component owns its tools and tasks through mise. The Go executable
+does not require Node.js or CGO at runtime.
 
 ```sh
 mise run check
@@ -72,56 +72,36 @@ Workflows own triggers, permissions, credentials, and runners.
 
 ## Releases
 
-Application and website versions are independent. The Release workflow updates
-one `release/next` PR after changes merge to main. Git-cliff calculates each
-component's next version from its Conventional squash commits and renders the
-shared [Conventional PR](https://github.com/azohra/conventional-pr) format.
-The PR contains `VERSION` and `CHANGELOG.md` changes for components with new work.
-Merging ordinary PRs does not publish or deploy those changes.
+Application and website versions are independent.
+[Release Please](https://github.com/googleapis/release-please) collects
+Conventional commits that touch each component and maintains one release PR on
+main. It changes the relevant `VERSION` and `CHANGELOG.md` files, so the next
+version and its generated notes are visible and reviewable before a release.
+Website-only changes do not release the application; a change that touches both
+components releases both. Before v1, a breaking component change advances the
+minor version.
 
-Git-cliff scopes history to the component directory. Website-only commits do not
-bump the application; mixed commits contribute their complete record to both.
-Application history in this layout starts with the directory move; earlier
-release records remain on GitHub. Before v1, breaking changes increment the
-minor version; from v1 onward, they increment the major. Features increment the
-minor, and the shared preset uses patch bumps for other Conventional changes.
-Non-Conventional commits are excluded. Notes link to the originating PR where
-GitHub supplies that association.
+Let the release PR accumulate work on main. Once that collection is stable, add
+any useful reader context inside the component release notes while keeping their
+version markers and structure intact. Do not add source changes to the release
+PR.
 
-`mise run //app:changelog` and `mise run //site:changelog` preview history; add
-`-- --context` for JSON. The shared git-cliff preset follows main. From a clean,
-current main checkout, `mise run release:prepare` generates the same version and
-changelog changes as CI. It does not create tags or publish anything.
+Its Check run calls `mise run release:check`. Mise validates and packages only
+the components whose release files changed. Application archives embed the
+proposed version; website releases contain the Vite bundle. The artifacts are
+retained for 90 days. Main must still be current and passing before the PR is
+merged.
 
-The release PR's Check run validates each releasing component and builds its
-final distributable. Go archives embed the proposed version, and the website
-bundle is built once. The resulting assets are retained for 90 days under the
-Git source tree's identity. Main requires the PR to be current and checks to pass.
-Refresh a stale release PR by dispatching Release on main; preparation recreates
-it from current main. Do not add source changes to the release PR.
+Merging the release PR makes draft GitHub Releases, uploads those checked
+artifacts, publishes them, and deploys a published website release from its tag.
+Application releases use `v…` tags and own GitHub's Latest release. Website
+releases use `site/v…` tags and do not. The source tag identifies the released
+main commit, and GitHub provides source downloads.
 
-Merging the release PR runs `mise run release:publish`. It requires a retained
-artifact from a successful Check run for that PR's head, with the same source
-tree as the merged commit. It publishes those exact assets without rebuilding
-or recalculating versions. Application tags use `v…` and own GitHub's Latest
-release; website tags use `site/v…` and do not take over Latest. Both tags identify
-the merged release commit. GitHub also provides source downloads.
-
-Application assets retain the five supported platform archives, Homebrew cask
-and checksums. Homebrew's scheduled updater proposes the cask change after
-publication. Website publication deploys the released `site.tar.gz` using the
-Wrangler configuration at its tag. A website-only release does not build or
-publish application binaries.
-
-Publication uploads to a draft before making the release visible. Rerun a failed
-Release run to retry the same commit and version; existing published versions
-are not overwritten, and tags targeting another commit are refused. Missing or
-expired check artifacts stop publication. Refresh checks before merging an old
-release PR. A deployment failure leaves the published website available for retry.
-
-The workflow uses GitHub's built-in token. Repository settings must allow Actions
-to create pull requests. It explicitly dispatches Check and Conventional PR for
-the generated branch because token-created PRs do not trigger those workflows.
+If publication fails after the release PR merges, rerun the failed Release job.
+It resumes the same draft release and retained artifacts; it does not calculate
+another version or rebuild. The manual Deploy website workflow remains available
+to deploy a published website tag for recovery or rollback.
 
 ## Website deployment
 

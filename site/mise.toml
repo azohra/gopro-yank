@@ -2,10 +2,6 @@
 node = "24"
 wrangler = "4.129.0"
 
-[env]
-GIT_CLIFF__GIT__TAG_PATTERN = '^site/v[0-9]+\.[0-9]+\.[0-9]+$'
-GIT_CLIFF__BUMP__INITIAL_TAG = "site/v0.1.0"
-
 [tasks.setup]
 run = "npm ci"
 sources = ["package.json", "package-lock.json"]
@@ -28,10 +24,6 @@ run = """
 sh -n public/install.sh
 npm test
 """
-
-[tasks.changelog]
-description = "Render website change history"
-run = "git cliff"
 
 [tasks.deploy]
 description = "Deploy a published website release"

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "f57103d9b0462450dcc300168e94fe7d552b5b13",
+  "always-update": true,
+  "bump-minor-pre-major": true,
+  "draft": true,
+  "force-tag-creation": true,
+  "pull-request-header": "This PR collects the reviewed changes ready to publish. Add release context inside each component's notes before merging.",
+  "pull-request-footer": "Merging publishes the checked artifacts for the listed components.",
+  "packages": {
+    "app": {
+      "release-type": "simple",
+      "package-name": "gopro-yank",
+      "version-file": "VERSION",
+      "include-component-in-tag": false
+    },
+    "site": {
+      "release-type": "simple",
+      "package-name": "site",
+      "component": "site",
+      "version-file": "VERSION",
+      "initial-version": "0.1.0",
+      "tag-separator": "/"
+    }
+  }
+}

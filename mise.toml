@@ -14,13 +14,7 @@ root = "app"
 root = "site"
 
 [tools]
-"aqua:orhun/git-cliff" = "2.14.1"
 gh = "2.100.0"
-node = "24"
-
-[env]
-GIT_CLIFF_CONFIG_URL = "https://raw.githubusercontent.com/azohra/conventional-pr/main/cliff.toml"
-GIT_CLIFF__GIT__USE_BRANCH_TAGS = "false"
 
 [tasks.check]
 description = "Check the application and website"
@@ -35,14 +29,11 @@ secret  CLOUDFLARE_API_TOKEN
 CONTRACT
 """
 
-[tasks."release:prepare"]
-description = "Prepare component versions and changelogs for a release PR"
-run = "node scripts/release.mjs prepare"
-
-[tasks."release:build"]
-description = "Build the release PR's versioned artifacts"
-run = "node scripts/release.mjs build"
-
-[tasks."release:publish"]
-description = "Publish the merged release PR's checked artifacts"
-run = "node scripts/release.mjs publish"
+[tasks."release:check"]
+description = "Check and package the components changed by a release candidate"
+run = '''
+RELEASE_VERSION=$(cat app/VERSION)
+export RELEASE_VERSION
+mise run --affected --affected-base "${MISE_AFFECTED_BASE:-origin/main}" '//...:check'
+mise run --affected --affected-base "${MISE_AFFECTED_BASE:-origin/main}" '//...:build:dist'
+'''
