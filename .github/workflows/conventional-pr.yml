@@ -9,10 +9,6 @@ on:
       pr:
         description: Pull request number
         required: true
-      release:
-        description: Generated Release Please candidate
-        required: false
-        type: boolean
 
 permissions:
   pull-requests: read
@@ -24,13 +20,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - if: github.event_name == 'workflow_dispatch'
+        id: pr
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ inputs.pr }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '{pull_request: .}' > "$GITHUB_EVENT_PATH"
-      - if: "${{ inputs.release }}"
-        run: |
-          jq -e 'any(.pull_request.labels[]; .name == "autorelease: pending")' "$GITHUB_EVENT_PATH" > /dev/null
-      - if: "${{ !inputs.release }}"
-        uses: azohra/conventional-pr@b7965e3b190643c2ea94b9cb4a01c6a9a020ea46
+          record=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq 'select(.head.sha == env.GITHUB_SHA) | {title, body} | tojson')
+          [ -n "$record" ] || { echo 'The PR head has changed; check its current revision.' >&2; exit 1; }
+          echo "record=$record" >> "$GITHUB_OUTPUT"
+      - uses: azohra/conventional-pr@508c7459a293456e1d5746c3123b61ee5b7eccdb
+        with:
+          pull-request: ${{ steps.pr.outputs.record }}

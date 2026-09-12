@@ -77,31 +77,42 @@ Application and website versions are independent.
 Conventional commits that touch each component and maintains one release PR on
 main. It changes the relevant `VERSION` and `CHANGELOG.md` files, so the next
 version and its generated notes are visible and reviewable before a release.
-Website-only changes do not release the application; a change that touches both
-components releases both. Before v1, a breaking component change advances the
-minor version.
+Release Please's default Conventional Commit rules determine release intent:
+features, fixes and breaking changes contribute to the next version. Other
+changes can accumulate without opening a release. Website-only changes do not
+release the application; releasable changes to both components release both.
+Before v1, a breaking component change advances the minor version.
 
 Let the release PR accumulate work on main. Once that collection is stable, add
 any useful reader context inside the component release notes while keeping their
-version markers and structure intact. Do not add source changes to the release
-PR.
+version markers and structure intact. Recheck this text after the PR updates;
+automation can replace edits. The component notes in the merged PR become the
+GitHub release notes. Source PR descriptions remain the detailed change record
+linked from those notes. They do not require special section headings. Do not
+add source changes to the release PR.
 
 Its Check run calls `mise run release:check`. Mise validates and packages only
 the components whose release files changed. Application archives embed the
 proposed version; website releases contain the Vite bundle. The artifacts are
-retained for 90 days. Main must still be current and passing before the PR is
-merged.
+retained for 90 days. The release PR must be up to date with main and have
+passing required checks before merging. Packaging and checks share mise's task
+graph, so the website build runs once.
 
-Merging the release PR makes draft GitHub Releases, uploads those checked
-artifacts, publishes them, and deploys a published website release from its tag.
+Merging the release PR makes draft GitHub Releases. `mise run release -- TAG`
+verifies that the tag and checked candidate have the same source tree, uploads
+the candidate's retained artifacts and publishes the release. The workflow then
+deploys a published website release from its tag.
 Application releases use `v…` tags and own GitHub's Latest release. Website
 releases use `site/v…` tags and do not. The source tag identifies the released
 main commit, and GitHub provides source downloads.
 
-If publication fails after the release PR merges, rerun the failed Release job.
-It resumes the same draft release and retained artifacts; it does not calculate
-another version or rebuild. The manual Deploy website workflow remains available
-to deploy a published website tag for recovery or rollback.
+If publication fails after the release PR merges, rerun the failed publish job.
+To resume separately, run the Release workflow with the existing tag, or run
+`mise run release -- TAG` locally. Both use the same retained artifacts;
+an already published release is left intact. Missing, expired or failed candidate
+artifacts stop publication. A retry does not calculate another version or rebuild.
+The manual Deploy website workflow remains available to deploy a published
+website tag for recovery or rollback.
 
 ## Website deployment
 
