@@ -32,8 +32,21 @@ CONTRACT
 [tasks."release:check"]
 description = "Check and package the components changed by a release candidate"
 run = '''
+#!/usr/bin/env bash
+set -euo pipefail
 RELEASE_VERSION=$(cat app/VERSION)
 export RELEASE_VERSION
-mise run --affected --affected-base "${MISE_AFFECTED_BASE:-origin/main}" '//...:check'
-mise run --affected --affected-base "${MISE_AFFECTED_BASE:-origin/main}" '//...:build:dist'
+files=$(git diff --name-only "${MISE_AFFECTED_BASE:-origin/main}" HEAD -- app/VERSION site/VERSION)
+[ -n "$files" ] || { echo 'release:check: no component version changed' >&2; exit 1; }
+tasks=()
+for file in $files; do
+  component=${file%/VERSION}
+  tasks+=(::: "//$component:check" ::: "//$component:build:dist")
+done
+mise run "${tasks[@]:1}"
 '''
+
+[tasks.release]
+description = "Publish an existing release from its checked candidate artifacts"
+usage = 'arg "<tag>" help="Release Please tag to publish or retry"'
+run = 'bash scripts/release.sh "$usage_tag"'
