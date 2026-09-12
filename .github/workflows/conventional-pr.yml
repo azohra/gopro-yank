@@ -28,7 +28,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ inputs.pr }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq "select(.head.sha == \"$GITHUB_SHA\") | {pull_request: .}" > "$GITHUB_EVENT_PATH"
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '{pull_request: .}' > "$GITHUB_EVENT_PATH"
       - if: "${{ inputs.release }}"
         run: |
           jq -e 'any(.pull_request.labels[]; .name == "autorelease: pending")' "$GITHUB_EVENT_PATH" > /dev/null
