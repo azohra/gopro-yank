@@ -5,8 +5,9 @@
   "bump-minor-pre-major": true,
   "draft": true,
   "force-tag-creation": true,
-  "pull-request-header": "This PR collects the reviewed changes ready to publish. Add release context inside each component's notes before merging.",
-  "pull-request-footer": "Merging publishes the checked artifacts for the listed components.",
+  "group-pull-request-title-pattern": "chore(release): prepare releases from ${branch}",
+  "pull-request-header": "<!-- release notes -->",
+  "pull-request-footer": "<!-- release notes -->",
   "packages": {
     "app": {
       "release-type": "simple",

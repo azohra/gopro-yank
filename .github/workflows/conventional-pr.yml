@@ -9,6 +9,10 @@ on:
       pr:
         description: Pull request number
         required: true
+      release:
+        description: Generated Release Please candidate
+        required: false
+        type: boolean
 
 permissions:
   pull-requests: read
@@ -25,4 +29,8 @@ jobs:
           PR_NUMBER: ${{ inputs.pr }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq "select(.head.sha == \"$GITHUB_SHA\") | {pull_request: .}" > "$GITHUB_EVENT_PATH"
-      - uses: azohra/conventional-pr@b7965e3b190643c2ea94b9cb4a01c6a9a020ea46
+      - if: "${{ inputs.release }}"
+        run: |
+          jq -e 'any(.pull_request.labels[]; .name == "autorelease: pending")' "$GITHUB_EVENT_PATH" > /dev/null
+      - if: "${{ !inputs.release }}"
+        uses: azohra/conventional-pr@b7965e3b190643c2ea94b9cb4a01c6a9a020ea46

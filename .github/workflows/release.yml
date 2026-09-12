@@ -35,11 +35,11 @@ jobs:
           RELEASE_PRS: ${{ steps.release.outputs.prs }}
         run: |
           read -r pr branch <<EOF
-          $(printf '%s' "$RELEASE_PRS" | jq -r '.[0] | "\(.number) \(.headRefName)"')
+          $(printf '%s' "$RELEASE_PRS" | jq -r '.[0] | "\(.number) \(.headBranchName)"')
           EOF
           [ -n "$pr" ] && [ "$pr" != null ] && [ -n "$branch" ] && [ "$branch" != null ]
           gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f release=true
-          gh workflow run conventional-pr.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f pr="$pr"
+          gh workflow run conventional-pr.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f pr="$pr" -f release=true
 
   publish:
     needs: collect
