@@ -1,11 +1,13 @@
 # Contributing
 
-Use the Go version declared in [`go.mod`](go.mod). The program does not require
-Python, Node.js, or CGO.
+The repository contains a Go application in `app/` and a Vite website in
+`site/`. Each component owns its tools and tasks through mise. The Go executable
+does not require Node.js or CGO at runtime.
 
 ```sh
-make check
-go run ./cmd/gopro-yank --demo
+mise run check
+mise run //app:dev
+mise run //site:dev
 ```
 
 The demo is offline. Tests use fixtures and local test servers; never use a real
@@ -15,14 +17,14 @@ GoPro account.
 
 | Area | Location |
 |---|---|
-| Entry point and version | [`cmd/gopro-yank/`](cmd/gopro-yank/) |
-| Shared workflows | [`operations.go`](internal/app/operations.go) |
-| TUI and supported CLI | [`tui.go`](internal/app/tui.go), [`tui_view.go`](internal/app/tui_view.go), [`cli.go`](internal/app/cli.go) |
-| Historical CLI aliases | [`cli_compat.go`](internal/app/cli_compat.go) |
-| Archive, transfer, checks, and deletion | [`archive.go`](internal/app/archive.go), [`transfer.go`](internal/app/transfer.go), [`delete.go`](internal/app/delete.go) |
-| Offline report | [`report.go`](internal/app/report.go) |
+| Entry point and version | [`cmd/gopro-yank/`](app/cmd/gopro-yank/) |
+| Shared workflows | [`operations.go`](app/internal/app/operations.go) |
+| TUI and supported CLI | [`tui.go`](app/internal/app/tui.go), [`tui_view.go`](app/internal/app/tui_view.go), [`cli.go`](app/internal/app/cli.go) |
+| Historical CLI aliases | [`cli_compat.go`](app/internal/app/cli_compat.go) |
+| Archive, transfer, checks, and deletion | [`archive.go`](app/internal/app/archive.go), [`transfer.go`](app/internal/app/transfer.go), [`delete.go`](app/internal/app/delete.go) |
+| Offline report | [`report.go`](app/internal/app/report.go) |
 | Static website | [`site/`](site/) |
-| Release packaging | [`build-dist.sh`](scripts/build-dist.sh) |
+| Release packaging | [`build-dist.sh`](app/scripts/build-dist.sh) |
 
 Keep behavior in shared workflows so the TUI and CLI agree. Compatibility
 commands support old scripts; they are not a second product surface.
@@ -46,54 +48,69 @@ data.
 ## Validation
 
 ```sh
-make fmt
-make check
-make build
-mise run build:dist
+mise run //app:format
+mise run check
+mise run //app:build:dist
 ```
 
-`make check` is required. `mise run build:dist` builds development archives without
-publishing them; run it when packaging, dependencies, or platforms change. If
-the source package's top-level contents change, update the `git archive`
-allowlist in `scripts/build-dist.sh`. Review website changes locally at
-desktop and phone widths.
+To check only affected components, run
+`mise run --affected --affected-base origin/main '//...:check'`. Add
+`--affected-explain --dry-run` to inspect the selection.
+
+`mise run //app:build:dist` builds development archives in `app/release/`
+without publishing them. Run it when packaging, dependencies or platforms change.
+
+`mise run //site:dev` starts Vite with live reload. `mise run //site:build`
+builds `site/dist/`, including generated CSS and JavaScript filenames. Files in
+`site/public/` are copied unchanged. The website check builds the site and tests installation using local release
+fixtures. Review page changes in a browser at desktop and phone widths, including
+the installation instructions and copy buttons.
 
 Keep the README consumer-focused and update `docs/brand.md` only for shared
 voice or visual rules. `mise.toml` owns executable CI and publishing behavior.
 Workflows own triggers, permissions, credentials, and runners.
 
-## Publishing a release
+## Releases
 
-See [Conventional PR](https://github.com/azohra/conventional-pr) for the change-record
-format and shared presentation. `mise run changelog -- --json` exports structured
-history; `mise.toml` follows the shared preset on main.
+Application and website versions are independent.
+[Release Please](https://github.com/googleapis/release-please) collects
+Conventional commits that touch each component and maintains one release PR on
+main. It changes the relevant `VERSION` and `CHANGELOG.md` files, so the next
+version and its generated notes are visible and reviewable before a release.
+Website-only changes do not release the application; a change that touches both
+components releases both. Before v1, a breaking component change advances the
+minor version.
 
-Run `mise run changelog` to see released and unreleased changes. Conventional
-squash commits determine the next version using git-cliff. Before v1.0.0,
-breaking changes increment the minor version; from v1.0.0 onward, they increment
-the major. Features increment the minor, and other Conventional changes
-increment the patch. Non-Conventional commits are excluded.
-Notes link to the originating PR, falling back to the commit when no PR exists.
-Set `GITHUB_TOKEN` for authenticated GitHub access when rendering notes; the shared
-preset is fetched for every invocation, including version calculation.
+Let the release PR accumulate work on main. Once that collection is stable, add
+any useful reader context inside the component release notes while keeping their
+version markers and structure intact. Do not add source changes to the release
+PR.
 
-From a clean checkout of current main, run `mise run release`, or dispatch the
-Release workflow on main. The command calculates the version once, builds the five
-platform archives, Homebrew cask and checksums, then creates the
-tag and GitHub Release with those assets and release notes. Source versions are
-not edited. Merging a PR does not publish a release.
+Its Check run calls `mise run release:check`. Mise validates and packages only
+the components whose release files changed. Application archives embed the
+proposed version; website releases contain the Vite bundle. The artifacts are
+retained for 90 days. Main must still be current and passing before the PR is
+merged.
 
-Main requires passing PR checks against the current base before merging. The
-Check workflow runs on pull requests or manual dispatch, without repeating after
-merge.
+Merging the release PR makes draft GitHub Releases, uploads those checked
+artifacts, publishes them, and deploys a published website release from its tag.
+Application releases use `v…` tags and own GitHub's Latest release. Website
+releases use `site/v…` tags and do not. The source tag identifies the released
+main commit, and GitHub provides source downloads.
 
-PR checks run `mise run check` and `mise run build:dist`. Packaging uses `dev`
-unless `RELEASE_VERSION` is supplied by the release task. It does not calculate
-versions from branch commits. GitHub provides source downloads for each tag.
-The archive names and layout remain the installer and Homebrew contract.
+If publication fails after the release PR merges, rerun the failed Release job.
+It resumes the same draft release and retained artifacts; it does not calculate
+another version or rebuild. The manual Deploy website workflow remains available
+to deploy a published website tag for recovery or rollback.
 
-Publication does not overwrite an existing release. If an upload is interrupted,
-inspect the draft and use GitHub CLI to upload missing assets and publish it.
-Do not move a published tag. Homebrew's scheduled updater proposes the cask change
-after publication. Website deployment remains independent of releases; its
-installers download the latest published assets.
+## Website deployment
+
+`mise run //site:deploy -- site/v0.1.0` downloads and deploys a published website
+release without building from the checkout. Add `--dry-run` to validate the
+release without deploying it. Omit the tag to select the latest website tag
+reachable from the checkout. GitHub and Cloudflare credentials come from the
+environment.
+
+The Deploy website workflow accepts a published tag for retry or rollback.
+Draft releases cannot be deployed. Website source changes can accumulate on
+main until the release PR is merged.

@@ -4,7 +4,14 @@ on:
   pull_request_target:
     types: [opened, reopened, edited, synchronize]
 
-permissions: {}
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number
+        required: true
+
+permissions:
+  pull-requests: read
 
 jobs:
   title:
@@ -12,4 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq "select(.head.sha == \"$GITHUB_SHA\") | {pull_request: .}" > "$GITHUB_EVENT_PATH"
       - uses: azohra/conventional-pr@b7965e3b190643c2ea94b9cb4a01c6a9a020ea46

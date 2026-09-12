@@ -1,0 +1,14 @@
+{
+  "name": "gopro-yank-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/install.test.js"
+  },
+  "devDependencies": {
+    "vite": "8.3.0"
+  }
+}

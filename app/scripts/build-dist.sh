@@ -20,7 +20,7 @@ for os in darwin linux windows; do
     CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -buildvcs=false \
       -ldflags="-s -w -X main.version=$release_version" \
       -o "$dir/$binary" ./cmd/gopro-yank
-    cp LICENSE "$dir/"
+    cp ../LICENSE "$dir/"
     if [ "$os" = windows ]; then
       (cd "$dir" && zip -q "$output_dir/gopro-yank_${os}_${arch}.zip" "$binary" LICENSE)
     else

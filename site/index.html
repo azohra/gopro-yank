@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#f4f0e8" />
     <link rel="canonical" href="https://gopro-yank.azohra.com/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles-v19.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="GoPro Yank — download your GoPro Cloud library" />
     <meta property="og:description" content="Download available GoPro originals into a checked local archive." />
@@ -21,7 +21,7 @@
     <meta name="twitter:title" content="GoPro Yank — download your GoPro Cloud library" />
     <meta name="twitter:description" content="Download available GoPro originals into a checked local archive." />
     <meta name="twitter:image" content="https://gopro-yank.azohra.com/og.png" />
-    <script src="/site.js?v=installer" defer></script>
+    <script type="module" src="/src/main.js"></script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -52,7 +52,7 @@
                 <button type="button" data-copy-command>Copy</button>
               </div>
               <p class="install-result" data-install-result>The script selects the right build, verifies its checksum, installs it, and opens GoPro Yank.</p>
-              <a class="inspect-link" data-installer-source href="https://github.com/azohra/gopro-yank/blob/main/site/install.sh">Read the install script</a>
+              <a class="inspect-link" data-installer-source href="https://github.com/azohra/gopro-yank/blob/main/site/public/install.sh">Read the install script</a>
             </div>
             <details class="alternate-downloads">
               <summary>Other ways to install</summary>

@@ -1,43 +1,101 @@
 name: Release
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
-  pull-requests: read
+  issues: write
+  pull-requests: write
 
 concurrency:
   group: release
-  cancel-in-progress: false
+  queue: max
 
 jobs:
-  release:
+  collect:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      app_created: ${{ steps.release.outputs['app--release_created'] }}
+      app_tag: ${{ steps.release.outputs['app--tag_name'] }}
+      site_created: ${{ steps.release.outputs['site--release_created'] }}
+      site_tag: ${{ steps.release.outputs['site--tag_name'] }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
+      - if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          read -r pr branch <<EOF
+          $(printf '%s' "$RELEASE_PRS" | jq -r '.[0] | "\(.number) \(.headRefName)"')
+          EOF
+          [ -n "$pr" ] && [ "$pr" != null ] && [ -n "$branch" ] && [ "$branch" != null ]
+          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f release=true
+          gh workflow run conventional-pr.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f pr="$pr"
+
+  publish:
+    needs: collect
+    if: needs.collect.outputs.releases_created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - id: candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null)][0].number')
+          [ -n "$pr" ] && [ "$pr" != null ] || { echo 'No merged release PR found for this commit.' >&2; exit 1; }
+          head=$(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)
+          run=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow check.yml --commit "$head" --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          [ -n "$run" ] && [ "$run" != null ] || { echo 'No successful Check run found for the release candidate.' >&2; exit 1; }
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
-          fetch-depth: 0
-      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.candidate.outputs.run }}
+          name: release-${{ steps.candidate.outputs.head }}
+          path: artifacts
+      - if: needs.collect.outputs.app_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_TAG: ${{ needs.collect.outputs.app_tag }}
+        run: |
+          gh release upload "$APP_TAG" artifacts/app/release/* --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$APP_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest=true
+      - if: needs.collect.outputs.site_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_TAG: ${{ needs.collect.outputs.site_tag }}
+        run: |
+          gh release upload "$SITE_TAG" artifacts/site/release/* --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$SITE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest=false
+      - if: needs.collect.outputs.site_created == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ needs.collect.outputs.site_tag }}
+      - if: needs.collect.outputs.site_created == 'true'
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c
         env:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         with:
-          minimum_release_age: 24h
-      - id: go_cache
-        run: |
-          echo "build=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
-          echo "modules=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: |
-            ${{ steps.go_cache.outputs.build }}
-            ${{ steps.go_cache.outputs.modules }}
-          key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('mise.toml') }}-
-      - name: Publish release
+          version: 2026.9.5
+          install: false
+      - if: needs.collect.outputs.site_created == 'true'
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: mise run release
+          GH_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SITE_TAG: ${{ needs.collect.outputs.site_tag }}
+        run: mise run //site:deploy -- "$SITE_TAG"
