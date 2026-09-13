@@ -33,9 +33,12 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           HOMEBREW_TOOLS_TOKEN: ${{ steps.bosun.outputs.token }}
         run: mise run release
-      # A published release with no assets would be "latest" for the installer.
-      # Put it back to draft so latest falls back to the previous release.
+      # A published release with no assets would be "latest". Return it to draft
+      # and drop the tag, so the previous release is latest again and publishing
+      # the draft later recreates the tag on main instead of reusing a stale one.
       - if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release edit "$GITHUB_REF_NAME" --draft=true
+        run: |
+          gh release edit "$GITHUB_REF_NAME" --draft=true
+          git push --delete origin "refs/tags/$GITHUB_REF_NAME" || true
