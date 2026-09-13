@@ -76,12 +76,15 @@ Workflows own triggers, permissions, credentials, and runners.
 
 ## Releases
 
-release-drafter keeps one draft release on GitHub. Every merge to main adds the
-pull request's title under Added or Fixed, from labels the Conventional title
-sets on its own, and resolves the next version: a breaking title is a major,
-`feat` a minor, `fix` a patch. `build`, `chore`, `ci`, `docs`, `style` and
-`test` titles stay out of the draft. The draft is the answer to "what is
-unreleased", and editing it is where release notes get written.
+release-drafter keeps one draft release on GitHub. Labels derived from the
+Conventional title group features under Added and fixes under Fixed. `feat`
+advances the minor version and `fix` advances the patch.
+
+Non-breaking `build`, `chore`, `ci`, `docs`, `style` and `test` titles stay out
+of the draft. A `!` breaking marker always keeps the change in the notes,
+regardless of its type, and advances the major version.
+
+The draft records what is unreleased and is where release notes are edited.
 
 Publishing the draft creates the tag. That runs the Release workflow, which is
 `mise run release`: goreleaser builds the archives for macOS, Linux and Windows
