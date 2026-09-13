@@ -59,6 +59,12 @@ a snapshot: every release archive, the checksums and the Homebrew cask land in
 `dist/` without publishing. Run it when packaging, dependencies or platforms
 change; CI runs both on every pull request.
 
+Tasks declare their inputs, and a task whose inputs match a previous successful
+run replays that result instead of running: the Go files are one partition,
+`www/` the other, and `mise.toml` invalidates both. Pull requests restore the
+cache that main last wrote, so a website change does not rerun the Go tests
+and a Go change does not rebuild the site. Only pushes to main write it.
+
 `mise run www:dev` starts Vite with live reload. `mise run www:build` builds
 `www/dist/`, including generated CSS and JavaScript filenames. Files in
 `www/public/` are copied unchanged. Review page changes in a browser at desktop

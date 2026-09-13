@@ -1,3 +1,18 @@
+[settings]
+# The task artifact cache: a task whose inputs are unchanged replays its
+# result instead of running again, on a laptop and on a runner alike.
+experimental = true
+
+# Two partitions. Every Go file anywhere is the application, plus the module
+# files and what the release archives carry; the website is www/. A file that
+# belongs to neither does not invalidate either.
+[task_config]
+global_inputs = ["mise.toml"]
+
+[task_config.input_groups]
+app = ["**/*.go", "cmd/**", "internal/**", "go.mod", "go.sum", "LICENSE"]
+www = ["www/**", "!www/node_modules/**", "!www/dist/**"]
+
 [vars]
 changelog_config = "https://gist.githubusercontent.com/azohra/2bf7f60736469fa8a81ffcb67214e572/raw/cliff.toml"
 
@@ -31,11 +46,17 @@ run = "gofmt -w cmd internal"
 
 [tasks.build]
 description = "Build the application for this machine"
+sources = ["@group:app"]
+outputs = ["gopro-yank"]
+cache = { enabled = true }
 run = "go build -trimpath -o gopro-yank ./cmd/gopro-yank"
 
 [tasks."check:app"]
 description = "Check formatting, vet, race tests and compilation"
 depends = ["build"]
+sources = ["@group:app"]
+outputs = []
+cache = { enabled = true }
 run = """
 [ -z "$(gofmt -l cmd internal)" ] || { echo 'Run mise run format' >&2; exit 1; }
 go vet ./...
@@ -48,6 +69,9 @@ run = 'git cliff --config-url "{{vars.changelog_config}}"'
 
 [tasks.dist]
 description = "Build every release archive, the checksums and the cask into dist/ without publishing"
+sources = ["@group:app", ".goreleaser.yaml"]
+outputs = []
+cache = { enabled = true }
 env = { HOMEBREW_TOOLS_TOKEN = "snapshot" }
 run = "goreleaser release --snapshot --clean"
 
@@ -58,8 +82,8 @@ run = "goreleaser release --clean"
 [tasks."www:setup"]
 dir = "www"
 run = "npm ci"
-sources = ["www/package.json", "www/package-lock.json"]
-outputs = ["www/node_modules/.package-lock.json"]
+sources = ["package.json", "package-lock.json"]
+outputs = ["node_modules/.package-lock.json"]
 
 [tasks."www:dev"]
 description = "Develop the website with Vite"
@@ -71,12 +95,18 @@ run = "npm run dev"
 description = "Build the website into www/dist"
 dir = "www"
 depends = ["www:setup"]
+sources = ["@group:www"]
+outputs = ["dist"]
+cache = { enabled = true }
 run = "npm run build"
 
 [tasks."www:check"]
 description = "Build the website and test the installer"
 dir = "www"
 depends = ["www:build"]
+sources = ["@group:www"]
+outputs = []
+cache = { enabled = true }
 run = """
 sh -n public/install.sh
 npm test
