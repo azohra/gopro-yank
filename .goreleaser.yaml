@@ -61,6 +61,7 @@ homebrew_casks:
 # artifacts to the release the published draft became.
 release:
   mode: keep-existing
+  name_template: "{{ .ProjectName }} {{ .Tag }}"
 
 changelog:
   disable: true
