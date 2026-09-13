@@ -2,56 +2,15 @@ name: Release
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: Existing release tag to retry; leave empty to collect changes
-        required: false
+    tags: ["v*"]
 
 permissions:
-  actions: write
   contents: write
-  issues: write
-  pull-requests: write
-
-concurrency:
-  group: release
-  queue: max
 
 jobs:
-  collect:
-    if: github.ref == 'refs/heads/main' && !inputs.tag
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      releases_created: ${{ steps.release.outputs.releases_created }}
-      app_tag: ${{ steps.release.outputs['app--tag_name'] }}
-      site_tag: ${{ steps.release.outputs['site--tag_name'] }}
-    steps:
-      - id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
-      - if: steps.release.outputs.prs_created == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_PRS: ${{ steps.release.outputs.prs }}
-        run: |
-          read -r pr branch <<EOF
-          $(printf '%s' "$RELEASE_PRS" | jq -r '.[0] | "\(.number) \(.headBranchName)"')
-          EOF
-          [ -n "$pr" ] && [ "$pr" != null ] && [ -n "$branch" ] && [ "$branch" != null ]
-          gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f release=true
-          gh workflow run conventional-pr.yml --repo "$GITHUB_REPOSITORY" --ref "$branch" -f pr="$pr"
-
-  publish:
-    needs: collect
-    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && (needs.collect.outputs.releases_created == 'true' || inputs.tag) }}
+  release:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      actions: read
-      contents: write
-      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -60,17 +19,17 @@ jobs:
         env:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         with:
-          version: 2026.9.5
-          install: false
+          minimum_release_age: 24h
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        id: bosun
+        with:
+          client-id: ${{ vars.BOSUN_CLIENT_ID }}
+          private-key: ${{ secrets.BOSUN_PRIVATE_KEY }}
+          owner: azohra
+          repositories: homebrew-tools
+          permission-contents: write
+          permission-pull-requests: write
       - env:
-          GH_TOKEN: ${{ github.token }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          APP_TAG: ${{ needs.collect.outputs.app_tag }}
-          SITE_TAG: ${{ needs.collect.outputs.site_tag }}
-          RETRY_TAG: ${{ inputs.tag }}
-        run: |
-          for tag in "$APP_TAG" "$SITE_TAG" "$RETRY_TAG"; do
-            [ -n "$tag" ] || continue
-            mise run release -- "$tag"
-            case "$tag" in site/v*) mise run //site:deploy -- "$tag" ;; esac
-          done
+          GITHUB_TOKEN: ${{ github.token }}
+          HOMEBREW_TOOLS_TOKEN: ${{ steps.bosun.outputs.token }}
+        run: mise run release
