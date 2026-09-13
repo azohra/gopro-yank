@@ -76,13 +76,15 @@ Workflows own triggers, permissions, credentials, and runners.
 
 ## Releases
 
-release-drafter keeps one draft release on GitHub. Labels derived from the
-Conventional title group features under Added and fixes under Fixed. `feat`
-advances the minor version and `fix` advances the patch.
+release-drafter keeps one draft release on GitHub. The `skip-changelog` label
+excludes a pull request from both release notes and version calculation,
+including titles with a `!` marker. `build`, `chore`, `ci`, `docs`, `style`
+and `test` titles receive that label automatically; it can also exclude other
+changes that do not belong in the installed application's release.
 
-Non-breaking `build`, `chore`, `ci`, `docs`, `style` and `test` titles stay out
-of the draft. A `!` breaking marker always keeps the change in the notes,
-regardless of its type, and advances the major version.
+For included changes, labels group features under Added and fixes under Fixed.
+`feat` advances the minor version, `fix` advances the patch, and a `!` breaking
+marker advances the major version. Exclusion is decided first.
 
 The draft records what is unreleased and is where release notes are edited.
 
