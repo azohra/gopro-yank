@@ -50,6 +50,7 @@ data.
 mise run format
 mise run check
 mise run dist
+mise run changelog
 ```
 
 `mise run check` formats, vets, builds and race-tests the application, then

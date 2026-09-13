@@ -1,4 +1,8 @@
+[vars]
+changelog_config = "https://gist.githubusercontent.com/azohra/2bf7f60736469fa8a81ffcb67214e572/raw/cliff.toml"
+
 [tools]
+"aqua:orhun/git-cliff" = "2.14.1"
 go = "1.27.1"
 goreleaser = "2.18.1"
 node = "24"
@@ -37,6 +41,10 @@ run = """
 go vet ./...
 go test -race ./...
 """
+
+[tasks.changelog]
+description = "Render the Conventional change history"
+run = 'git cliff --config-url "{{vars.changelog_config}}"'
 
 [tasks.dist]
 description = "Build every release archive, the checksums and the cask into dist/ without publishing"
