@@ -11,8 +11,10 @@ hide = true
 description = "Every variable this repository needs, and whether it is a secret"
 run = """
 cat <<'CONTRACT'
+secret  BOSUN_PRIVATE_KEY
 secret  CLOUDFLARE_API_TOKEN
 secret  GITHUB_TOKEN
+value   BOSUN_CLIENT_ID
 CONTRACT
 """
 
@@ -38,6 +40,7 @@ go test -race ./...
 
 [tasks.dist]
 description = "Build every release archive, the checksums and the cask into dist/ without publishing"
+env = { HOMEBREW_TOOLS_TOKEN = "snapshot" }
 run = "goreleaser release --snapshot --clean"
 
 [tasks.release]

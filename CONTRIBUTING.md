@@ -73,8 +73,9 @@ A release is a `v…` tag on main. Pushing the tag runs the Release workflow,
 which is `mise run release`: goreleaser builds the archives for macOS, Linux
 and Windows with the version from the tag, writes `checksums.txt`, generates
 the Homebrew cask, and publishes the GitHub release with notes from the
-`feat` and `fix` commits since the previous tag. The cask is a release asset;
-homebrew-tools pulls it from there.
+`feat` and `fix` commits since the previous tag. It then opens a pull request
+in homebrew-tools with the new cask, using a token minted from the Bosun app;
+that repository's checks gate the cask.
 
 The version lives only in the tag. Nothing in the tree changes for a release.
 

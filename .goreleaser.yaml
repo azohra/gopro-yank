@@ -26,13 +26,26 @@ archives:
 checksum:
   name_template: checksums.txt
 
-# The cask is published as a release asset; homebrew-tools pulls it from there.
+# goreleaser opens the cask update as a pull request in homebrew-tools, whose
+# own checks gate it. The token is minted per run from the Bosun app.
 homebrew_casks:
   - name: gopro-yank
-    skip_upload: true
     repository:
       owner: azohra
       name: homebrew-tools
+      token: "{{ .Env.HOMEBREW_TOOLS_TOKEN }}"
+      branch: "gopro-yank-{{ .Version }}"
+      pull_request:
+        enabled: true
+        base:
+          owner: azohra
+          name: homebrew-tools
+          branch: main
+    directory: Casks
+    commit_author:
+      name: azohra-bosun[bot]
+      email: 325107280+azohra-bosun[bot]@users.noreply.github.com
+    commit_msg_template: "chore(deps): update gopro-yank to {{ .Tag }}"
     homepage: https://gopro-yank.azohra.com/
     description: Download and verify available GoPro cloud originals
     binaries:
@@ -43,10 +56,6 @@ homebrew_casks:
           if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/gopro-yank"]
           end
-
-release:
-  extra_files:
-    - glob: dist/homebrew/Casks/gopro-yank.rb
 
 changelog:
   use: github

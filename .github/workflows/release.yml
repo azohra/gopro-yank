@@ -20,6 +20,16 @@ jobs:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         with:
           minimum_release_age: 24h
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        id: bosun
+        with:
+          client-id: ${{ vars.BOSUN_CLIENT_ID }}
+          private-key: ${{ secrets.BOSUN_PRIVATE_KEY }}
+          owner: azohra
+          repositories: homebrew-tools
+          permission-contents: write
+          permission-pull-requests: write
       - env:
           GITHUB_TOKEN: ${{ github.token }}
+          HOMEBREW_TOOLS_TOKEN: ${{ steps.bosun.outputs.token }}
         run: mise run release
