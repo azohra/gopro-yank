@@ -1,6 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: gomod
+    labels: ["dependencies"]
     directory: /
     schedule:
       interval: weekly
@@ -21,6 +22,7 @@ updates:
       prefix: fix
       include: scope
   - package-ecosystem: github-actions
+    labels: ["dependencies"]
     directory: /
     schedule:
       interval: weekly
@@ -41,6 +43,7 @@ updates:
       prefix: ci
       include: scope
   - package-ecosystem: npm
+    labels: ["dependencies"]
     directory: /www
     schedule:
       interval: weekly
