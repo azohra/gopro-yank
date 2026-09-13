@@ -1,9 +1,7 @@
 # Build output
-/release/
-/app/gopro-yank
-/app/release/
-/site/dist/
-/site/release/
+/gopro-yank
+/dist/
+/www/dist/
 node_modules/
 
 # Local remnants from the Python version

@@ -1,17 +1,16 @@
 name: Deploy website
 
 on:
+  push:
+    branches: [main]
+    paths: ["www/**"]
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Published website tag (site/v…)
-        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: release
+  group: deploy
   queue: max
 
 jobs:
@@ -21,16 +20,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c
         env:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         with:
-          version: 2026.9.5
-          install: false
+          minimum_release_age: 24h
+      - run: mise run www:check
       - env:
-          GITHUB_TOKEN: ${{ github.token }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          SITE_TAG: ${{ inputs.tag }}
-        run: mise run //site:deploy -- "$SITE_TAG"
+        run: mise run --yes www:deploy

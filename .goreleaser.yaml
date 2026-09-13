@@ -1,0 +1,65 @@
+version: 2
+project_name: gopro-yank
+
+builds:
+  - main: ./cmd/gopro-yank
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: darwin
+        goarch: amd64
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: checksums.txt
+
+# The cask is published as a release asset; homebrew-tools pulls it from there.
+homebrew_casks:
+  - name: gopro-yank
+    skip_upload: true
+    repository:
+      owner: azohra
+      name: homebrew-tools
+    homepage: https://gopro-yank.azohra.com/
+    description: Download and verify available GoPro cloud originals
+    binaries:
+      - gopro-yank
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/gopro-yank"]
+          end
+
+release:
+  extra_files:
+    - glob: dist/homebrew/Casks/gopro-yank.rb
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: Added
+      regexp: '^feat'
+      order: 0
+    - title: Fixed
+      regexp: '^fix'
+      order: 1
+    - title: Changed
+      order: 2
+  filters:
+    exclude:
+      - '^(build|chore|ci|docs|style|test)(\(|:|!)'

@@ -1,52 +1,89 @@
-monorepo_root = true
-min_version = "2026.9.5"
-
-[settings]
-experimental = true
-
-[monorepo]
-config_roots = ["app", "site"]
-
-[monorepo.projects."custom:app"]
-root = "app"
-
-[monorepo.projects."custom:site"]
-root = "site"
-
 [tools]
-gh = "2.100.0"
+go = "1.27.1"
+goreleaser = "2.18.1"
+node = "24"
+wrangler = "4.129.0"
 
-[tasks.check]
-description = "Check the application and website"
-depends = ["//app:check", "//site:check"]
-
+# What this repository needs in its environment, and which of those
+# disclosure would compromise. Read it; do not restate it.
 [tasks."env:contract"]
 hide = true
 description = "Every variable this repository needs, and whether it is a secret"
 run = """
 cat <<'CONTRACT'
 secret  CLOUDFLARE_API_TOKEN
+secret  GITHUB_TOKEN
 CONTRACT
 """
 
-[tasks."release:check"]
-description = "Check and package the components changed by a release candidate"
+[tasks.dev]
+description = "Run the offline application demo"
+run = "go run ./cmd/gopro-yank --demo"
+
+[tasks.format]
+run = "gofmt -w cmd internal"
+
+[tasks.build]
+description = "Build the application for this machine"
+run = "go build -trimpath -o gopro-yank ./cmd/gopro-yank"
+
+[tasks."check:app"]
+description = "Check formatting, vet, race tests and compilation"
+depends = ["build"]
+run = """
+[ -z "$(gofmt -l cmd internal)" ] || { echo 'Run mise run format' >&2; exit 1; }
+go vet ./...
+go test -race ./...
+"""
+
+[tasks.dist]
+description = "Build every release archive, the checksums and the cask into dist/ without publishing"
+run = "goreleaser release --snapshot --clean"
+
+[tasks.release]
+description = "Publish the release for the checked-out tag"
+run = "goreleaser release --clean"
+
+[tasks."www:setup"]
+dir = "www"
+run = "npm ci"
+sources = ["www/package.json", "www/package-lock.json"]
+outputs = ["www/node_modules/.package-lock.json"]
+
+[tasks."www:dev"]
+description = "Develop the website with Vite"
+dir = "www"
+depends = ["www:setup"]
+run = "npm run dev"
+
+[tasks."www:build"]
+description = "Build the website into www/dist"
+dir = "www"
+depends = ["www:setup"]
+run = "npm run build"
+
+[tasks."www:check"]
+description = "Build the website and test the installer"
+dir = "www"
+depends = ["www:build"]
+run = """
+sh -n public/install.sh
+npm test
+wrangler deploy --dry-run
+"""
+
+[tasks."www:deploy"]
+description = "Deploy the build in www/dist to Cloudflare"
+dir = "www"
+confirm = "Deploy gopro-yank.azohra.com to production?"
+timeout = "5m"
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
-RELEASE_VERSION=$(cat app/VERSION)
-export RELEASE_VERSION
-files=$(git diff --name-only "${MISE_AFFECTED_BASE:-origin/main}" HEAD -- app/VERSION site/VERSION)
-[ -n "$files" ] || { echo 'release:check: no component version changed' >&2; exit 1; }
-tasks=()
-for file in $files; do
-  component=${file%/VERSION}
-  tasks+=(::: "//$component:check" ::: "//$component:build:dist")
-done
-mise run "${tasks[@]:1}"
+[ -d dist ] || { echo 'www:deploy: no build in www/dist; run mise run www:check first' >&2; exit 1; }
+wrangler deploy --tag "$(git rev-parse --short HEAD)"
 '''
 
-[tasks.release]
-description = "Publish an existing release from its checked candidate artifacts"
-usage = 'arg "<tag>" help="Release Please tag to publish or retry"'
-run = 'bash scripts/release.sh "$usage_tag"'
+[tasks.check]
+description = "Check the application and the website"
+depends = ["check:app", "www:check"]
