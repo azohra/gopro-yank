@@ -60,7 +60,6 @@ homebrew_casks:
 # Notes come from the draft release-drafter kept; goreleaser attaches the
 # artifacts to the release the published draft became.
 release:
-  use_existing_draft: true
   mode: keep-existing
 
 changelog:
