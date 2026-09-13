@@ -14,7 +14,7 @@ app = ["**/*.go", "cmd/**", "internal/**", "go.mod", "go.sum", "LICENSE"]
 www = ["www/**", "!www/node_modules/**", "!www/dist/**"]
 
 [vars]
-changelog_config = "https://gist.githubusercontent.com/azohra/2bf7f60736469fa8a81ffcb67214e572/raw/cliff.toml"
+changelog_config = "https://raw.githubusercontent.com/azohra/.github/main/cliff.toml"
 
 [tools]
 "aqua:orhun/git-cliff" = "2.14.1"
