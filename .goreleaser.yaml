@@ -57,18 +57,11 @@ homebrew_casks:
             system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/gopro-yank"]
           end
 
+# Notes come from the draft release-drafter kept; goreleaser attaches the
+# artifacts to the release the published draft became.
+release:
+  use_existing_draft: true
+  mode: keep-existing
+
 changelog:
-  use: github
-  sort: asc
-  groups:
-    - title: Added
-      regexp: '^feat'
-      order: 0
-    - title: Fixed
-      regexp: '^fix'
-      order: 1
-    - title: Changed
-      order: 2
-  filters:
-    exclude:
-      - '^(build|chore|ci|docs|style|test)(\(|:|!)'
+  disable: true

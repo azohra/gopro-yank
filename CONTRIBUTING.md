@@ -69,13 +69,19 @@ Workflows own triggers, permissions, credentials, and runners.
 
 ## Releases
 
-A release is a `v…` tag on main. Pushing the tag runs the Release workflow,
-which is `mise run release`: goreleaser builds the archives for macOS, Linux
-and Windows with the version from the tag, writes `checksums.txt`, generates
-the Homebrew cask, and publishes the GitHub release with notes from the
-`feat` and `fix` commits since the previous tag. It then opens a pull request
-in homebrew-tools with the new cask, using a token minted from the Bosun app;
-that repository's checks gate the cask.
+release-drafter keeps one draft release on GitHub. Every merge to main adds the
+pull request's title under Added or Fixed, from labels the Conventional title
+sets on its own, and resolves the next version: a breaking title is a major,
+`feat` a minor, `fix` a patch. `build`, `chore`, `ci`, `docs`, `style` and
+`test` titles stay out of the draft. The draft is the answer to "what is
+unreleased", and editing it is where release notes get written.
+
+Publishing the draft creates the tag. That runs the Release workflow, which is
+`mise run release`: goreleaser builds the archives for macOS, Linux and Windows
+with the version from the tag, writes `checksums.txt`, attaches them to the
+release, and opens a pull request in homebrew-tools with the generated cask,
+using a token minted from the Bosun app. Assets appear a minute or two after
+publishing.
 
 The version lives only in the tag. Nothing in the tree changes for a release.
 
