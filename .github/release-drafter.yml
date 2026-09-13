@@ -1,6 +1,6 @@
 # The draft release is the list of what is unreleased. Merging a pull request
 # refreshes it; publishing it creates the tag that runs the Release workflow.
-name-template: 'v$RESOLVED_VERSION'
+name-template: 'GoPro Yank v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
 change-template: '- $TITLE (#$NUMBER)'
 change-title-escapes: '\<*_&'
