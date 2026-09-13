@@ -4,12 +4,6 @@ on:
   pull_request_target:
     types: [opened, reopened, edited, synchronize]
 
-  workflow_dispatch:
-    inputs:
-      pr:
-        description: Pull request number
-        required: true
-
 permissions:
   pull-requests: read
 
@@ -19,15 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - if: github.event_name == 'workflow_dispatch'
-        id: pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ inputs.pr }}
-        run: |
-          record=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq 'select(.head.sha == env.GITHUB_SHA) | {title, body} | tojson')
-          [ -n "$record" ] || { echo 'The PR head has changed; check its current revision.' >&2; exit 1; }
-          echo "record=$record" >> "$GITHUB_OUTPUT"
       - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,5 +30,3 @@ jobs:
             style
             test
           requireScope: false
-        with:
-          pull-request: ${{ steps.pr.outputs.record }}
